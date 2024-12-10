@@ -26,5 +26,5 @@ jobs:
         uses: aws-actions/s3-sync@v2
         with:
           source: './build'
-          destination: 's3://your-bucket-name'  # 실제 버킷명으로 변경
+          destination: 's3://testdasibar'  # 실제 버킷명으로 변경
           # delete: true # 로컬에 없는 파일은 S3에서 삭제하려면 주석 해제
