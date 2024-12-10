@@ -8,24 +8,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
-      # 1. 코드 체크아웃
-      - name: Check out code
-        uses: actions/checkout@v2
 
-      # 2. AWS 자격 증명 설정
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+    steps:
+      # 1. GitHub 레포지토리 클론
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      # 2. AWS CLI 설정
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-2  # 필요 시 변경
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # 3. build 폴더를 S3로 동기화
-      - name: Sync build folder to S3
-        uses: aws-actions/s3-sync@v1
-        with:
-          source: './build'
-          destination: 's3://testdasibar'  # 실제 버킷명 적용
-          # 필요하다면 delete 옵션을 통해 S3에서 로컬에 없는 파일 삭제 가능
-          # delete: true
+      # 3. S3 버킷에 빌드폴더 내 파일만 업로드
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./build s3://testdasibar --delete
