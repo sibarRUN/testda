@@ -116,16 +116,16 @@ const Navbar = () => {
         if (err || !session.isValid()) {
           // 세션이 유효하지 않으면 알람 후 로그인 페이지로 리디렉션
           alert("봉지니는 로그인 후 사용하실 수 있습니다.");
-          window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2u50llkglor25.cloudfront.net';
+          window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2c37b9hnb6ap4.cloudfront.net';
         } else {
-          // 세션이 유효하면 BONGGENIE 페이지로 이동
-          window.location.href = '/bonggenie';
+          // 세션이 유효하면 bongjini.html 페이지로 이동
+          window.location.href = '/bongjini.html';
         }
       });
     } else {
       // 사용자가 없으면 알람 후 로그인 페이지로 리디렉션
       alert("봉지니는 로그인 후 사용하실 수 있습니다.");
-      window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2u50llkglor25.cloudfront.net';
+      window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2c37b9hnb6ap4.cloudfront.net';
     }
   };
 
@@ -169,7 +169,7 @@ const Navbar = () => {
         <Item
           whileHover={{ scale: 1.1, y: -5 }}
           whileTap={{ scale: 0.9, y: 0 }}
-          onClick={() => window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2u50llkglor25.cloudfront.net'}
+          onClick={() => window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2c37b9hnb6ap4.cloudfront.net'}
         >
           <Link to="#">Login / Register</Link>
         </Item>
