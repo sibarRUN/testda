@@ -3,7 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { useLocomotiveScroll } from 'react-locomotive-scroll';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { CognitoUserPool, CognitoUser, CognitoUserSession, CognitoIdToken, CognitoAccessToken, CognitoRefreshToken } from 'amazon-cognito-identity-js';
+import {
+  CognitoUserPool,
+  CognitoUser,
+  CognitoUserSession,
+  CognitoIdToken,
+  CognitoAccessToken,
+  CognitoRefreshToken
+} from 'amazon-cognito-identity-js';
 
 const NavContainer = styled(motion.div)`
   position: absolute;
@@ -16,7 +23,7 @@ const NavContainer = styled(motion.div)`
   align-items: center;
 
   @media (max-width: 40em) {
-    top: ${(props) => (props.click ? '0' : `calc(-50vh - 4rem)`)}};
+    top: ${(props) => (props.click ? '0' : `calc(-50vh - 4rem)`)};
   }
 `;
 
@@ -75,8 +82,8 @@ const Item = styled(motion.li)`
 `;
 
 const poolData = {
-  UserPoolId: 'ap-northeast-2_jczobrwlq',
-  ClientId: 'e90hcf6rica8am3h81lcsuspe',
+  UserPoolId: 'ap-northeast-2_jczobrwlq', // 실제 User Pool ID
+  ClientId: 'e90hcf6rica8am3h81lcsuspe',  // 실제 App Client ID
 };
 
 const userPool = new CognitoUserPool(poolData);
@@ -86,17 +93,15 @@ const Navbar = () => {
   const { scroll } = useLocomotiveScroll();
   const navigate = useNavigate();
 
-  // code 파라미터를 사용한 토큰 교환
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     if (code) {
-      // 이미 토큰 교환했는지 확인 로직이 필요할 수 있지만 여기서는 단순히 code 있을 때마다 교환 시도
       const data = new URLSearchParams();
       data.append('grant_type', 'authorization_code');
       data.append('client_id', 'e90hcf6rica8am3h81lcsuspe');
       data.append('code', code);
-      data.append('redirect_uri', 'https://d2c37b9hnb6ap4.cloudfront.net'); // 실제 리디렉트 URI와 동일하게!
+      data.append('redirect_uri', 'https://d2c37b9hnb6ap4.cloudfront.net'); 
 
       fetch('https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/oauth2/token', {
         method: 'POST',
@@ -108,7 +113,6 @@ const Navbar = () => {
       .then(res => res.json())
       .then(tokens => {
         if (tokens.id_token && tokens.access_token && tokens.refresh_token) {
-          // CognitoUserSession 객체를 생성하고 로컬스토리지에 세션 저장
           const idToken = new CognitoIdToken({ IdToken: tokens.id_token });
           const accessToken = new CognitoAccessToken({ AccessToken: tokens.access_token });
           const refreshToken = new CognitoRefreshToken({ RefreshToken: tokens.refresh_token });
@@ -118,15 +122,15 @@ const Navbar = () => {
             RefreshToken: refreshToken
           });
 
+          const username = idToken.payload['cognito:username'];
           const user = new CognitoUser({
-            Username: idToken.payload.sub, // unique identifier
+            Username: username,
             Pool: userPool
           });
 
-          // 세션을 설정하면 로컬스토리지에 세션 정보가 저장됨
           user.setSignInUserSession(session);
 
-          // URL 정리 (code 파라미터 제거)
+          // URL에서 code 파라미터 제거
           const newUrl = window.location.origin + window.location.pathname;
           window.history.replaceState({}, document.title, newUrl);
         }
