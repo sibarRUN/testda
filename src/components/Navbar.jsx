@@ -158,14 +158,14 @@ const Navbar = () => {
       user.getSession((err, session) => {
         if (err || !session.isValid()) {
           alert("잘못된 접근입니다. 로그인해주세요.");
-          window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2c37b9hnb6ap4.cloudfront.net';
+          window.location.href = 'http://testdasibar.s3-website.ap-northeast-2.amazonaws.com/';
         } else {
           window.location.href = '/bongjini.html';
         }
       });
     } else {
       alert("봉지니는 로그인 후 사용하실 수 있습니다.");
-      window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2c37b9hnb6ap4.cloudfront.net';
+      window.location.href = 'http://testdasibar.s3-website.ap-northeast-2.amazonaws.com/';
     }
   };
 
@@ -209,7 +209,7 @@ const Navbar = () => {
         <Item
           whileHover={{ scale: 1.1, y: -5 }}
           whileTap={{ scale: 0.9, y: 0 }}
-          onClick={() => window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2c37b9hnb6ap4.cloudfront.net'}
+          onClick={() => window.location.href = 'http://testdasibar.s3-website.ap-northeast-2.amazonaws.com/'}
         >
           <Link to="#">Login / Register</Link>
         </Item>
