@@ -169,7 +169,7 @@ const Navbar = () => {
         <Item
           whileHover={{ scale: 1.1, y: -5 }}
           whileTap={{ scale: 0.9, y: 0 }}
-          onClick={() => window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2c37b9hnb6ap4.cloudfront.net'}
+          onClick={() => window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login/continue?client_id=e90hcf6rica8am3h81lcsuspe&redirect_uri=https%3A%2F%2Fd2c37b9hnb6ap4.cloudfront.net&response_type=code&scope=email+openid'}
         >
           <Link to="#">Login / Register</Link>
         </Item>
