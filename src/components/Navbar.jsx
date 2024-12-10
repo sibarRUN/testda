@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocomotiveScroll } from 'react-locomotive-scroll';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { CognitoUserPool } from 'amazon-cognito-identity-js';
+
 
 const NavContainer = styled(motion.div)`
   position: absolute;
@@ -93,10 +95,38 @@ const Item = styled(motion.li)`
   }
 `;
 
+// Cognito User Pool 설정
+const poolData = {
+  UserPoolId: 'ap-northeast-2_jczobrwlq', // 사용자 풀 ID
+  ClientId: 'e90hcf6rica8am3h81lcsuspe',  // 앱 클라이언트 ID
+};
+
+const userPool = new CognitoUserPool(poolData);
+
 const Navbar = () => {
   const [click, setClick] = useState(false);
 
   const { scroll } = useLocomotiveScroll();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = userPool.getCurrentUser(); // 현재 사용자 가져오기
+      if (user) {
+        user.getSession((err, session) => {
+          if (err || !session.isValid()) {
+            // 세션이 유효하지 않으면 로그인 페이지로 리디렉션
+            window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2u50llkglor25.cloudfront.net';
+          }
+        });
+      } else {
+        // 사용자가 없으면 로그인 페이지로 리디렉션
+        window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd2u50llkglor25.cloudfront.net';
+      }
+    };
+
+    checkAuth(); // 인증 상태 확인
+  }, []);
 
   const handleScroll = (id) => {
     let elem = document.querySelector(id);
