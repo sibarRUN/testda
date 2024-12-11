@@ -172,23 +172,22 @@ const Navbar = () => {
   const handleBonggenieClick = (event) => {
     event.preventDefault();
     const user = userPool.getCurrentUser(); // 현재 사용자 가져오기
-    if (!user) {
+    if (user) {
       // 사용자 세션 확인
       user.getSession((err, session) => {
         if (err || !session.isValid()) {
           alert("잘못된 접근입니다. 로그인해주세요.");
           // 로그인 페이지로 리디렉션
-          window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&redirect_uri=https://d209iioos46fo1.cloudfront.net&response_type=code&scope=email+openid';
+          window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd209iioos46fo1.cloudfront.net';
         } else {
           // BongGenie 페이지로 이동
           window.location.href = 'http://testdasibar.s3-website.ap-northeast-2.amazonaws.com/bongjini.html';
         }
       });
-      return;
     } else {
       // 로그인하지 않은 경우 경고 메시지
       alert("봉지니는 로그인 후 사용하실 수 있습니다.");
-      window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&redirect_uri=https://d209iioos46fo1.cloudfront.net&response_type=code&scope=email+openid';
+      window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd209iioos46fo1.cloudfront.net';
     }
   };
 
@@ -232,7 +231,7 @@ const Navbar = () => {
         <Item
           whileHover={{ scale: 1.1, y: -5 }}
           whileTap={{ scale: 0.9, y: 0 }}
-          onClick={() => window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&redirect_uri=https://d209iioos46fo1.cloudfront.net&response_type=code&scope=email+openid'}
+          onClick={() => window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fd209iioos46fo1.cloudfront.net'}
         >
           <Link to="#">Login / Register</Link>
         </Item>
