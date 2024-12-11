@@ -113,7 +113,7 @@ const Navbar = () => {
       const data = new URLSearchParams();
       data.append('grant_type', 'authorization_code');
       data.append('client_id', 'e90hcf6rica8am3h81lcsuspe');
-      data.append('code', code);
+      data.append('code', '73234089-0dc0-49d0-bc58-8a34a811f966');
       data.append('redirect_uri', 'https://d19kcxe6thj51s.cloudfront.net');
 
       fetch('https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/oauth2/token', {
