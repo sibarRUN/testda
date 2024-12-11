@@ -214,7 +214,7 @@ const Navbar = () => {
       });
     } else {
       // If no user is logged in, alert and redirect to login
-      alert("봉지니는 로그인 후 사용하실 수 있습니다.");
+      alert("쒸이이발 줘엇같네.");
       window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
     }
   };
