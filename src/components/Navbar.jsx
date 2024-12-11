@@ -108,13 +108,13 @@ const Navbar = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code'); // URL에서 "code" 파라미터 가져오기
+    
     if (code) {
-      // Cognito 토큰 교환 요청 생성
       const data = new URLSearchParams();
       data.append('grant_type', 'authorization_code');
-      data.append('client_id', poolData.ClientId);
+      data.append('client_id', 'e90hcf6rica8am3h81lcsuspe');
       data.append('code', code);
-      data.append('redirect_uri', 'http://testdasibar.s3-website.ap-northeast-2.amazonaws.com/bongjini.html');
+      data.append('redirect_uri', 'https://d19kcxe6thj51s.cloudfront.net');
 
       fetch('https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/oauth2/token', {
         method: 'POST',
@@ -123,15 +123,15 @@ const Navbar = () => {
         },
         body: data,
       })
-        .then(async (res) => {
-          if (!res.ok) {
-            const error = await res.json();
-            console.error('토큰 요청 실패: ', error);
-            throw new Error(`토큰 요청 실패: ${res.status}`);
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-          return res.json();
+          return response.json();
         })
         .then((tokens) => {
+          console.log('Tokens received:', tokens);
+          // 토큰을 받은 후 세션 설정
           if (tokens.id_token && tokens.access_token && tokens.refresh_token) {
             const idToken = new CognitoIdToken({ IdToken: tokens.id_token });
             const accessToken = new CognitoAccessToken({ AccessToken: tokens.access_token });
@@ -150,16 +150,13 @@ const Navbar = () => {
             });
 
             user.setSignInUserSession(session);
-
-            const newUrl = window.location.origin + window.location.pathname;
-            window.history.replaceState({}, document.title, newUrl);
           }
         })
-        .catch((err) => {
-          console.error('토큰 교환 실패: ', err);
+        .catch((error) => {
+          console.error('Error during token exchange:', error);
         });
     }
-  }, []);
+  }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행
 
   // 특정 ID로 스크롤 이동
   const handleScroll = (id) => {
