@@ -12,7 +12,9 @@ import {
   CognitoRefreshToken
 } from 'amazon-cognito-identity-js';
 
-// 스타일링: 네비게이션 컨테이너
+// Styled-components for styling the Navbar and its elements
+
+// NavContainer: The main container for the navigation bar
 const NavContainer = styled(motion.div)`
   position: absolute;
   top: ${(props) => (props.click ? '0' : `-${props.theme.navHeight}`)};
@@ -28,7 +30,7 @@ const NavContainer = styled(motion.div)`
   }
 `;
 
-// 스타일링: 메뉴 버튼
+// MenuBtn: The button to toggle the menu visibility
 const MenuBtn = styled.li`
   background-color: ${(props) => `rgba(${props.theme.textRgba},0.7)`};
   color: ${(props) => props.theme.body};
@@ -55,7 +57,7 @@ const MenuBtn = styled.li`
   }
 `;
 
-// 스타일링: 메뉴 항목 리스트
+// MenuItems: The container for the list of menu items
 const MenuItems = styled(motion.ul)`
   position: relative;
   height: ${(props) => props.theme.navHeight};
@@ -75,7 +77,7 @@ const MenuItems = styled(motion.ul)`
   }
 `;
 
-// 스타일링: 개별 메뉴 항목
+// Item: Individual menu item styling
 const Item = styled(motion.li)`
   text-transform: uppercase;
   color: ${(props) => props.theme.text};
@@ -85,37 +87,54 @@ const Item = styled(motion.li)`
   }
 `;
 
-// Cognito User Pool 설정
+// Cognito User Pool configuration
 const poolData = {
-  UserPoolId: 'ap-northeast-2_jczobrwlq', // 실제 Cognito User Pool ID
-  ClientId: 'e90hcf6rica8am3h81lcsuspe',  // 실제 App Client ID
+  UserPoolId: 'ap-northeast-2_jczobrwlq', // Replace with your Cognito User Pool ID
+  ClientId: 'e90hcf6rica8am3h81lcsuspe',  // Replace with your Cognito App Client ID
 };
 
-// Cognito User Pool 객체 생성
+// Initialize the Cognito User Pool
 const userPool = new CognitoUserPool(poolData);
 
+// Navbar component definition
 const Navbar = () => {
-  // 메뉴 클릭 상태 관리
+  // State to manage the menu's open/close state
   const [click, setClick] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // LocomotiveScroll 라이브러리 사용
+  // LocomotiveScroll for smooth scrolling
   const { scroll } = useLocomotiveScroll();
 
-  // React Router를 사용한 페이지 이동
+  // useNavigate hook from react-router-dom for navigation
   const navigate = useNavigate();
 
-  // useEffect: 로그인 코드 처리 및 세션 설정
+  // Effect to check if the user is already authenticated on component mount
+  useEffect(() => {
+    const user = userPool.getCurrentUser();
+    if (user) {
+      user.getSession((err, session) => {
+        if (!err && session.isValid()) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      });
+    }
+  }, []);
+
+  // Effect to handle the authorization code received from Cognito after login
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const code = params.get('code'); // URL에서 "code" 파라미터 가져오기
+    const code = params.get('code'); // Get the "code" query parameter from the URL
     if (code) {
-      // Cognito 토큰 교환 요청 생성
+      // Prepare the data for token exchange
       const data = new URLSearchParams();
       data.append('grant_type', 'authorization_code');
-      data.append('client_id', 'e90hcf6rica8am3h81lcsuspe');
+      data.append('client_id', poolData.ClientId);
       data.append('code', code);
-      data.append('redirect_uri', 'http://testdasibar.s3-website.ap-northeast-2.amazonaws.com/bongjini.html/'); 
+      data.append('redirect_uri', 'https://d19kcxe6thj51s.cloudfront.net'); // Must match Cognito App Client settings
 
+      // Exchange the authorization code for tokens
       fetch('https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/oauth2/token', {
         method: 'POST',
         headers: {
@@ -125,28 +144,36 @@ const Navbar = () => {
       })
       .then(res => res.json())
       .then(tokens => {
-        // 토큰을 기반으로 세션 설정
+        // Check if all tokens are present
         if (tokens.id_token && tokens.access_token && tokens.refresh_token) {
+          // Create Cognito tokens
           const idToken = new CognitoIdToken({ IdToken: tokens.id_token });
           const accessToken = new CognitoAccessToken({ AccessToken: tokens.access_token });
           const refreshToken = new CognitoRefreshToken({ RefreshToken: tokens.refresh_token });
+
+          // Create a Cognito User Session
           const session = new CognitoUserSession({
             IdToken: idToken,
             AccessToken: accessToken,
             RefreshToken: refreshToken
           });
 
-          // Cognito 사용자 정보 설정
+          // Extract the username from the ID token
           const username = idToken.payload['cognito:username'];
+
+          // Initialize a CognitoUser object
           const user = new CognitoUser({
             Username: username,
             Pool: userPool
           });
 
-          // 사용자 세션 저장
+          // Set the user's session
           user.setSignInUserSession(session);
 
-          // URL에서 "code" 파라미터 제거
+          // Update authentication state
+          setIsAuthenticated(true);
+
+          // Remove the "code" query parameter from the URL
           const newUrl = window.location.origin + window.location.pathname;
           window.history.replaceState({}, document.title, newUrl);
         }
@@ -157,7 +184,7 @@ const Navbar = () => {
     }
   }, []);
 
-  // 특정 ID로 스크롤 이동
+  // Function to handle scrolling to specific sections
   const handleScroll = (id) => {
     const elem = document.querySelector(id);
     setClick(!click);
@@ -168,27 +195,44 @@ const Navbar = () => {
     });
   };
 
-  // BongGenie 버튼 클릭 처리
+  // Function to handle the 'BonGenie' button click
   const handleBonggenieClick = (event) => {
     event.preventDefault();
-    const user = userPool.getCurrentUser(); // 현재 사용자 가져오기
-    if (!user) {
-      // 사용자 세션 확인
+    const user = userPool.getCurrentUser(); // Get the current user
+
+    if (user) {
+      // If user exists, check the session
       user.getSession((err, session) => {
         if (err || !session.isValid()) {
+          // If session is invalid, alert and redirect to login
           alert("잘못된 접근입니다. 로그인해주세요.");
-          // 로그인 페이지로 리디렉션
-          window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&redirect_uri=https://d209iioos46fo1.cloudfront.net&response_type=code&scope=email+openid';
+          window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
         } else {
-          // BongGenie 페이지로 이동
-          window.location.href = 'http://testdasibar.s3-website.ap-northeast-2.amazonaws.com/bongjini.html';
+          // If session is valid, redirect to BonGenie page
+          window.location.href = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
         }
       });
-      return;
     } else {
-      // 로그인하지 않은 경우 경고 메시지
+      // If no user is logged in, alert and redirect to login
       alert("봉지니는 로그인 후 사용하실 수 있습니다.");
-      window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&redirect_uri=https://d209iioos46fo1.cloudfront.net&response_type=code&scope=email+openid';
+      window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
+    }
+  };
+
+  // Function to handle logout
+  const handleLogout = () => {
+    const user = userPool.getCurrentUser();
+    if (user) {
+      user.signOut(); // Sign out the user from Cognito
+      setIsAuthenticated(false); // Update authentication state
+      alert("로그아웃 되었습니다.");
+
+      // Redirect to Cognito logout endpoint to clear the session on the server
+      const logoutUrl = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/logout?client_id=${poolData.ClientId}&logout_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net`;
+      window.location.href = logoutUrl;
+    } else {
+      // If user is not logged in, alert
+      alert("이미 로그아웃 상태입니다.");
     }
   };
 
@@ -205,9 +249,12 @@ const Navbar = () => {
         dragElastic={0.05}
         dragSnapToOrigin
       >
+        {/* Menu Button to toggle menu visibility */}
         <MenuBtn onClick={() => setClick(!click)}>
           <span>MENU</span>
         </MenuBtn>
+
+        {/* Home Menu Item */}
         <Item
           whileHover={{ scale: 1.1, y: -5 }}
           whileTap={{ scale: 0.9, y: 0 }}
@@ -215,6 +262,8 @@ const Navbar = () => {
         >
           <Link to="/">Home</Link>
         </Item>
+
+        {/* About Menu Item */}
         <Item
           whileHover={{ scale: 1.1, y: -5 }}
           whileTap={{ scale: 0.9, y: 0 }}
@@ -222,6 +271,8 @@ const Navbar = () => {
         >
           <Link to="/">About</Link>
         </Item>
+
+        {/* Shop Menu Item */}
         <Item
           whileHover={{ scale: 1.1, y: -5 }}
           whileTap={{ scale: 0.9, y: 0 }}
@@ -229,13 +280,27 @@ const Navbar = () => {
         >
           <Link to="/">Shop</Link>
         </Item>
-        <Item
-          whileHover={{ scale: 1.1, y: -5 }}
-          whileTap={{ scale: 0.9, y: 0 }}
-          onClick={() => window.location.href = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=e90hcf6rica8am3h81lcsuspe&redirect_uri=https://d209iioos46fo1.cloudfront.net&response_type=code&scope=email+openid'}
-        >
-          <Link to="#">Login / Register</Link>
-        </Item>
+
+        {/* Login / Register or Logout Menu Item */}
+        {isAuthenticated ? (
+          <Item
+            whileHover={{ scale: 1.1, y: -5 }}
+            whileTap={{ scale: 0.9, y: 0 }}
+            onClick={handleLogout}
+          >
+            <Link to="#">Logout</Link>
+          </Item>
+        ) : (
+          <Item
+            whileHover={{ scale: 1.1, y: -5 }}
+            whileTap={{ scale: 0.9, y: 0 }}
+            onClick={() => window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`}
+          >
+            <Link to="#">Login / Register</Link>
+          </Item>
+        )}
+
+        {/* BonGenie Menu Item */}
         <Item
           whileHover={{ scale: 1.1, y: -5 }}
           whileTap={{ scale: 0.9, y: 0 }}
