@@ -131,8 +131,55 @@
 
     const handleImageChange = (event) => {
       const image = document.getElementById('uploadedImage');
+<<<<<<< HEAD
       image.src = URL.createObjectURL(event.target.files[0]);
       image.style.display = 'block';
+=======
+      const file = event.target.files[0];
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Image = reader.result.split(',')[1];  // Base64 부분만 추출
+          image.src = reader.result;
+          image.style.display = 'block';
+
+          // Base64 이미지를 Lambda 함수로 전송
+          uploadImageToS3(base64Image);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const uploadImageToS3 = async (base64Image) => {
+      const token = getTokenFromLocalStorage();
+      const requestBody = {
+        image: base64Image,
+      };
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Image uploaded successfully:', data.imageUrl);  // S3 URL 반환
+          // 이미지 URL을 화면에 표시하는 코드 추가
+          alert(`Image uploaded: ${data.imageUrl}`);
+        } else {
+          throw new Error('Error uploading image');
+        }
+      } catch (error) {
+        console.error('Error:', error.message);
+        alert('Failed to upload image');
+      }
+>>>>>>> 6456360 (v 5.1.0)
     };
 
     const exchangeCodeForToken = async (code) => {
