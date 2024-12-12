@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bongjini</title>
   <style>
+    @keyframes moveText {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
     body {
       font-family: 'Kaushan Script', sans-serif;
       background-image: url('suit.webp');
@@ -51,19 +60,27 @@
       gap: 1rem;
     }
 
-    input, .btn {
+    input[type="file"], input[type="number"], .btn {
       width: 100%;
       padding: 0.8rem;
       font-size: 1.2rem;
       border: 1px solid #555;
       border-radius: 5px;
+      outline: none;
       margin: 5px 0;
     }
 
     .btn {
       background-color: #333;
       color: #fff;
+      border: none;
       cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #555;
+      transform: translateY(-3px);
     }
 
     img#uploadedImage {
@@ -84,8 +101,8 @@
       <form onsubmit="handleSubmit(event)">
         <input type="file" accept="image/*" onchange="handleImageChange(event)">
         <img id="uploadedImage" alt="Uploaded" style="display: none;">
-        <input type="number" id="height" placeholder="Height (cm)" required>
-        <input type="number" id="weight" placeholder="Weight (kg)" required>
+        <input type="number" id="height" placeholder="Height (cm)" required min="0">
+        <input type="number" id="weight" placeholder="Weight (kg)" required min="0">
         <button type="submit" class="btn" id="submitButton">Submit</button>
       </form>
     </div>
@@ -99,7 +116,7 @@
     let isNewEntry = true;
 
     const getTokenFromLocalStorage = () => {
-      const token = localStorage.getItem('idToken'); // idToken을 가져옴
+      const token = localStorage.getItem('accessToken');
       if (!token) {
         redirectToLogin();
         throw new Error('Token missing');
@@ -119,42 +136,52 @@
     };
 
     const exchangeCodeForToken = async (code) => {
-      const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
-      const params = new URLSearchParams();
-      params.append('grant_type', 'authorization_code');
-      params.append('code', code);
-      params.append('redirect_uri', REDIRECT_URI);
-      params.append('client_id', CLIENT_ID);
+      try {
+        const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
+        const params = new URLSearchParams();
+        params.append('grant_type', 'authorization_code');
+        params.append('code', code);
+        params.append('redirect_uri', REDIRECT_URI);
+        params.append('client_id', CLIENT_ID);
 
-      const response = await fetch(tokenEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      });
+        const response = await fetch(tokenEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
+        });
 
-      if (response.ok) {
-        const tokens = await response.json();
-        localStorage.setItem('accessToken', tokens.access_token);
-        localStorage.setItem('idToken', tokens.id_token); // idToken 저장
-        return true;
-      } else {
-        console.error('Failed to exchange code for token');
-        return false;
+        if (response.ok) {
+          const tokens = await response.json();
+          localStorage.setItem('accessToken', tokens.access_token);
+          return true;
+        } else {
+          console.error('Failed to exchange code for token');
+          return false;
+        }
+      } catch (error) {
+        console.error('Error during token exchange:', error);
       }
     };
 
     const checkExistingData = async () => {
-      const token = getTokenFromLocalStorage();
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      try {
+        const token = getTokenFromLocalStorage();
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        isNewEntry = false;
-      } else if (response.status === 404) {
-        isNewEntry = true;
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Existing data found:', data);
+          isNewEntry = false;
+        } else if (response.status === 404) {
+          isNewEntry = true;
+        } else {
+          throw new Error('Error checking data');
+        }
+      } catch (error) {
+        console.error('Error checking data:', error);
       }
       updateSubmitButtonLabel();
     };
@@ -168,23 +195,25 @@
       event.preventDefault();
       const height = document.getElementById('height').value;
       const weight = document.getElementById('weight').value;
-      const token = getTokenFromLocalStorage();
 
-      const response = await fetch(apiUrl, {
-        method: isNewEntry ? 'POST' : 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ Height: height, Weight: weight }),
-      });
+      try {
+        const token = getTokenFromLocalStorage();
+        const response = await fetch(apiUrl, {
+          method: isNewEntry ? 'POST' : 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ Height: parseFloat(height), Weight: parseFloat(weight) }),
+        });
 
-      if (response.ok) {
+        if (!response.ok) throw new Error('Error submitting data');
+        const data = await response.json();
         alert(`Data ${isNewEntry ? 'added' : 'updated'} successfully.`);
         isNewEntry = false;
         updateSubmitButtonLabel();
-      } else {
-        alert('Error submitting data');
+      } catch (error) {
+        alert(`Error: ${error.message}`);
       }
     };
 
@@ -196,6 +225,7 @@
         const success = await exchangeCodeForToken(code);
         if (success) window.history.replaceState({}, document.title, window.location.pathname);
       }
+
       checkExistingData();
     };
 
