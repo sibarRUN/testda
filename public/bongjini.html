@@ -43,13 +43,6 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
 
-    .explain-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-    }
-
     .explain-container img {
       width: 150px;
       height: auto;
@@ -67,43 +60,20 @@
       gap: 1rem;
     }
 
-    input[type="file"] {
-      margin-bottom: 1rem;
-    }
-
-    img {
-      width: 100px;
-      height: 100px;
-      margin-bottom: 1rem;
-    }
-
-    .input-group {
-      display: flex;
-      align-items: center;
-    }
-
-    input[type="number"] {
+    input[type="file"], input[type="number"], .btn {
+      width: 100%;
       padding: 0.8rem;
       font-size: 1.2rem;
       border: 1px solid #555;
       border-radius: 5px;
       outline: none;
-      transition: border-color 0.3s ease;
-      margin-right: 0.5rem;
-      height: 50px;
-    }
-
-    input[type="number"]:focus {
-      border-color: #888;
+      margin: 5px 0;
     }
 
     .btn {
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
       background-color: #333;
       color: #fff;
       border: none;
-      border-radius: 5px;
       cursor: pointer;
       transition: background-color 0.3s ease, transform 0.3s ease;
     }
@@ -113,10 +83,10 @@
       transform: translateY(-3px);
     }
 
-    .button-group {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
+    img#uploadedImage {
+      width: 100px;
+      height: 100px;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -124,159 +94,142 @@
   <div class="container">
     <div class="explain-container">
       <img src="explain.png" alt="Explanation">
-      <p>사진 파일 첨부시<br>
-        위의 사진과 같이<br>
-        정면이 보이는 사진을<br>
-        넣어주세요.<br>
-        사진을 잘못 첨부하면<br>
-        옷 추천을 제대로 못합니다.</p>
+      <p>정면이 보이는 사진을 첨부하세요. 잘못된 사진은 추천에 영향을 줍니다.</p>
     </div>
-
     <div class="form-container">
       <h1>BONGENIE</h1>
       <form onsubmit="handleSubmit(event)">
         <input type="file" accept="image/*" onchange="handleImageChange(event)">
         <img id="uploadedImage" alt="Uploaded" style="display: none;">
-        <div class="input-group">
-<<<<<<< HEAD
-          <input type="number" id="height" placeholder="Height" required min="0">
-          <span>cm</span>
-        </div>
-        <div class="input-group">
-          <input type="number" id="weight" placeholder="Weight" required min="0">
-          <span>kg</span>
-        </div>
-        <div class="button-group">
-          <button id="submitButton" type="submit" class="btn">Submit</button>
-=======
-          <input type="number" id="height" placeholder="Height" required style="height: 50px; font-size: 1.2rem;" min="0">
-          <span>cm</span>
-        </div>
-        <div class="input-group">
-          <input type="number" id="weight" placeholder="Weight" required style="height: 50px; font-size: 1.2rem;" min="0">
-          <span>kg</span>
-        </div>
-        <div class="button-group">
-          <button type="submit" class="btn">Submit</button>
->>>>>>> 91a11642870ff2e91b209e7b0c06eec79ab86d42
-          <button type="button" class="btn" onclick="history.back()">Back</button>
-        </div>
+        <input type="number" id="height" placeholder="Height (cm)" required min="0">
+        <input type="number" id="weight" placeholder="Weight (kg)" required min="0">
+        <button type="submit" class="btn" id="submitButton">Submit</button>
       </form>
     </div>
   </div>
 
   <script>
-<<<<<<< HEAD
+    const COGNITO_DOMAIN = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
+    const CLIENT_ID = 'e90hcf6rica8am3h81lcsuspe';
+    const REDIRECT_URI = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
+    const apiUrl = 'https://l4194gow55.execute-api.ap-northeast-2.amazonaws.com/dev/bongjini';
     let isNewEntry = true;
 
-    // 이미지 파일이 변경될 때 호출되는 함수
-    function handleImageChange(event) {
-      const image = document.getElementById('uploadedImage');
-      image.src = URL.createObjectURL(event.target.files[0]); // 선택한 이미지의 URL 생성
-      image.style.display = 'block'; // 이미지 표시
-    }
-
-    // API URL 설정
-    const apiUrl = 'https://l4194gow55.execute-api.ap-northeast-2.amazonaws.com/dev/bongjini';
-
-    // JWT 토큰을 검증하여 사용자 ID를 추출하는 함수
-    async function getUserIdFromToken() {
-      const token = localStorage.getItem('authToken'); // 저장된 JWT 토큰 가져오기
+    const getTokenFromLocalStorage = () => {
+      const token = localStorage.getItem('accessToken');
       if (!token) {
-        throw new Error('User is not authenticated. Please log in.');
+        redirectToLogin();
+        throw new Error('Token missing');
       }
+      return token;
+    };
 
-      const decoded = JSON.parse(atob(token.split('.')[1])); // JWT의 payload 디코딩
-      return decoded.sub; // Cognito의 사용자 ID (sub 필드)
-    }
+    const redirectToLogin = () => {
+      const loginUrl = `${COGNITO_DOMAIN}/login?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=email+openid`;
+      window.location.href = loginUrl;
+    };
 
-    // 폼 제출 시 호출되는 함수
-    async function handleSubmit(event) {
-      event.preventDefault(); // 기본 제출 동작 방지
+    const handleImageChange = (event) => {
+      const image = document.getElementById('uploadedImage');
+      image.src = URL.createObjectURL(event.target.files[0]);
+      image.style.display = 'block';
+    };
 
-      const height = document.getElementById('height').value; // 높이 값 가져오기
-      const weight = document.getElementById('weight').value; // 체중 값 가져오기
+    const exchangeCodeForToken = async (code) => {
+      try {
+        const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
+        const params = new URLSearchParams();
+        params.append('grant_type', 'authorization_code');
+        params.append('code', code);
+        params.append('redirect_uri', REDIRECT_URI);
+        params.append('client_id', CLIENT_ID);
+
+        const response = await fetch(tokenEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
+        });
+
+        if (response.ok) {
+          const tokens = await response.json();
+          localStorage.setItem('accessToken', tokens.access_token);
+          return true;
+        } else {
+          console.error('Failed to exchange code for token');
+          return false;
+        }
+      } catch (error) {
+        console.error('Error during token exchange:', error);
+      }
+    };
+
+    const checkExistingData = async () => {
+      try {
+        const token = getTokenFromLocalStorage();
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Existing data found:', data);
+          isNewEntry = false;
+        } else if (response.status === 404) {
+          isNewEntry = true;
+        } else {
+          throw new Error('Error checking data');
+        }
+      } catch (error) {
+        console.error('Error checking data:', error);
+      }
+      updateSubmitButtonLabel();
+    };
+
+    const updateSubmitButtonLabel = () => {
+      const button = document.getElementById('submitButton');
+      button.textContent = isNewEntry ? 'Submit' : 'Update Data (PATCH)';
+    };
+
+    const handleSubmit = async (event) => {
+      event.preventDefault();
+      const height = document.getElementById('height').value;
+      const weight = document.getElementById('weight').value;
 
       try {
-        const userId = await getUserIdFromToken(); // JWT를 통해 사용자 ID 추출
-
+        const token = getTokenFromLocalStorage();
         const response = await fetch(apiUrl, {
           method: isNewEntry ? 'POST' : 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            Height: parseFloat(height),
-            Weight: parseFloat(weight),
-          }),
+          body: JSON.stringify({ Height: parseFloat(height), Weight: parseFloat(weight) }),
         });
 
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`); // 오류 처리
-        }
-
-        const data = await response.json(); // 응답 데이터 파싱
-        alert(`Data successfully ${isNewEntry ? 'added' : 'updated'}: ${JSON.stringify(data)}`);
-        isNewEntry = false; // POST 완료 후 수정 상태로 전환
+        if (!response.ok) throw new Error('Error submitting data');
+        const data = await response.json();
+        alert(`Data ${isNewEntry ? 'added' : 'updated'} successfully.`);
+        isNewEntry = false;
         updateSubmitButtonLabel();
       } catch (error) {
-        console.error('Error submitting data:', error); // 오류 로그
-        alert(`Error: ${error.message}`); // 오류 메시지
+        alert(`Error: ${error.message}`);
       }
-    }
+    };
 
-    // 페이지 로드 시 데이터 상태 확인 (GET 요청)
-    async function checkExistingData() {
-      try {
-        const userId = await getUserIdFromToken(); // JWT에서 사용자 ID 추출
+    const init = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
 
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json(); // 응답 데이터 파싱
-          console.log('Existing data found:', data);
-          isNewEntry = false;
-        } else if (response.status === 404) {
-          console.log('No existing data found. Switching to POST mode.');
-          isNewEntry = true;
-        } else {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-      } catch (error) {
-        console.error('Error checking existing data:', error);
+      if (code) {
+        const success = await exchangeCodeForToken(code);
+        if (success) window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      updateSubmitButtonLabel();
-    }
+      checkExistingData();
+    };
 
-    // 버튼 라벨 업데이트
-    function updateSubmitButtonLabel() {
-      const button = document.getElementById('submitButton');
-      button.textContent = isNewEntry ? 'Submit' : 'Update Data (PATCH)';
-    }
-
-    // 페이지 로드 시 데이터 상태 확인
-    window.onload = checkExistingData;
-=======
-    function handleImageChange(event) {
-      const image = document.getElementById('uploadedImage');
-      image.src = URL.createObjectURL(event.target.files[0]);
-      image.style.display = 'block';
-    }
-
-    function handleSubmit(event) {
-      event.preventDefault();
-      const height = document.getElementById('height').value;
-      const weight = document.getElementById('weight').value;
-      alert(`Height: ${height} cm, Weight: ${weight} kg`);
-    }
->>>>>>> 91a11642870ff2e91b209e7b0c06eec79ab86d42
+    window.onload = init;
   </script>
 </body>
 </html>
