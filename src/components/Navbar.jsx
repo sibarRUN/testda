@@ -1,15 +1,11 @@
+// Navbar.jsx
 import { motion } from 'framer-motion';
 import React, { useState, useEffect } from 'react';
 import { useLocomotiveScroll } from 'react-locomotive-scroll';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import {
-  CognitoUserPool,
-  CognitoUser,
-  CognitoUserSession,
-  CognitoIdToken,
-  CognitoAccessToken,
-  CognitoRefreshToken
+  CognitoUserPool
 } from 'amazon-cognito-identity-js';
 
 // Styled-components for styling the Navbar and its elements
@@ -88,7 +84,7 @@ const Item = styled(motion.li)`
 `;
 
 // Cognito User Pool configuration
-const COGNITO_DOMAIN = 'https://ap-northeast-2-jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
+const COGNITO_DOMAIN = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
 const REDIRECT_URI = 'https://d19kcxe6thj51s.cloudfront.net';
 
 const poolData = {
@@ -108,26 +104,27 @@ const Navbar = () => {
   // LocomotiveScroll for smooth scrolling
   const { scroll } = useLocomotiveScroll();
 
-  // useNavigate hook from react-router-dom for navigation
-  const navigate = useNavigate();
-
-  const location = useLocation();
-
   useEffect(() => {
-    // URL에서 인증 코드를 확인하는 부분
-    const urlParams = new URLSearchParams(window.location.search);
-    const authCode = urlParams.get('code');
+    // Check URL for 'code' parameter
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    console.log("URL 파라미터 확인 - 인증 코드:", code ? '존재' : '없음');
 
-    if (authCode) {
-      // 인증 코드가 있으면 토큰으로 교환하는 함수 호출
-      console.log("인증 코드 발견:", authCode); // 디버깅용 로그
-      exchangeCodeForToken(authCode);
+    if (code) {
+      exchangeCodeForToken(code);
+    } else {
+      // Check localStorage for tokens
+      const accessToken = localStorage.getItem('accessToken');
+      console.log("localStorage 토큰 확인:", accessToken ? '존재' : '없음');
+      if (accessToken) {
+        setIsAuthenticated(true);
+      }
     }
   }, []);
 
   const exchangeCodeForToken = async (code) => {
     try {
-      console.log("토큰 교환 시작");
+      console.log("토큰 교환 시작, 코드:", code);
       const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
       
       const params = new URLSearchParams();
@@ -135,6 +132,9 @@ const Navbar = () => {
       params.append('client_id', poolData.ClientId);
       params.append('code', code);
       params.append('redirect_uri', REDIRECT_URI);
+
+      console.log("요청 URL:", tokenEndpoint);
+      console.log("요청 파라미터:", params.toString());
 
       const response = await fetch(tokenEndpoint, {
         method: 'POST',
@@ -144,12 +144,29 @@ const Navbar = () => {
         body: params
       });
 
+      console.log("응답 상태:", response.status);
+
       if (response.ok) {
         const tokens = await response.json();
+        console.log("토큰 수신 성공");
+
+        // 토큰 저장 전 확인
+        console.log("토큰 정보:", {
+          accessToken: tokens.access_token ? '존재' : '없음',
+          idToken: tokens.id_token ? '존재' : '없음',
+          refreshToken: tokens.refresh_token ? '존재' : '없음'
+        });
+
+        // Store tokens in localStorage
         localStorage.setItem('accessToken', tokens.access_token);
         localStorage.setItem('idToken', tokens.id_token);
         localStorage.setItem('refreshToken', tokens.refresh_token);
+        
         setIsAuthenticated(true);
+        
+        // Remove the 'code' parameter from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
         return true;
       } else {
         const errorData = await response.text();
@@ -163,15 +180,6 @@ const Navbar = () => {
       return false;
     }
   };
-
-  // 컴포넌트가 처음 로드될 때 localStorage에서 토큰 확인
-  useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    console.log("저장된 액세스 토큰:", accessToken ? '존재' : '없음'); // 디버깅용 로그
-    if (accessToken) {
-      setIsAuthenticated(true);
-    }
-  }, []);
 
   // Function to handle scrolling to specific sections
   const handleScroll = (id) => {
@@ -187,42 +195,39 @@ const Navbar = () => {
   // Function to handle the 'BonGenie' button click
   const handleBonggenieClick = async (event) => {
     event.preventDefault();
-    const user = userPool.getCurrentUser();
+    console.log("봉지니 버튼 클릭됨");
+    
+    // Check localStorage directly
+    const accessToken = localStorage.getItem('accessToken');
+    console.log("저장된 액세스 토큰:", accessToken ? '존재' : '없음');
 
-    if (user) {
+    if (accessToken) {
       try {
-        const session = await new Promise((resolve, reject) => {
-          user.getSession((err, session) => {
-            if (err) reject(err);
-            else resolve(session);
-          });
-        });
-
-        if (session.isValid()) {
-          window.location.href = `${REDIRECT_URI}/bongjini.html`;
-        } else {
-          alert("세션이 만료되었습니다. 다시 로그인해주세요.");
-          handleLogout();
-        }
+        // Navigate to BonGenie page
+        console.log("인증된 상태로 봉지니 페이지 접근");
+        window.location.href = `${REDIRECT_URI}/bongjini.html`;
       } catch (err) {
-        console.error('세션 확인 중 오류:', err);
-        alert("로그인 상태를 확인하는 중 오류가 발생했습니다.");
+        console.error('페이지 이동 중 오류:', err);
+        alert("페이지 접근 중 오류가 발생했습니다.");
         handleLogout();
       }
     } else {
-      alert("로그인이 필요한 서비스입니다.");
+      console.log("미인증 상태 - 로그인 페이지로 리디렉션");
+      alert("BonGenie는 로그인 후 사용하실 수 있습니다?진짜로.");
       window.location.href = `${COGNITO_DOMAIN}/login?client_id=${poolData.ClientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=email+openid`;
     }
   };
 
   // Function to handle logout
   const handleLogout = () => {
+    // Remove tokens from localStorage
     localStorage.removeItem('accessToken');
     localStorage.removeItem('idToken');
     localStorage.removeItem('refreshToken');
     
     setIsAuthenticated(false);
     
+    // Redirect to Cognito logout
     const logoutUrl = `${COGNITO_DOMAIN}/logout?client_id=${poolData.ClientId}&logout_uri=${encodeURIComponent(REDIRECT_URI)}`;
     window.location.href = logoutUrl;
   };
@@ -273,21 +278,27 @@ const Navbar = () => {
         </Item>
 
         {/* Login / Register or Logout Menu Item */}
-        {isAuthenticated ? (
+        {!isAuthenticated ? (
+          <Item
+            whileHover={{ scale: 1.1, y: -5 }}
+            whileTap={{ scale: 0.9, y: 0 }}
+            onClick={() => {
+              console.log("로그인 버튼 클릭");
+              // Login URL
+              const loginUrl = `${COGNITO_DOMAIN}/login?client_id=${poolData.ClientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=email+openid`;
+              console.log("로그인 URL:", loginUrl);
+              window.location.href = loginUrl;
+            }}
+          >
+            <Link to="#" onClick={(e) => e.preventDefault()}>Login / Register</Link>
+          </Item>
+        ) : (
           <Item
             whileHover={{ scale: 1.1, y: -5 }}
             whileTap={{ scale: 0.9, y: 0 }}
             onClick={handleLogout}
           >
             <Link to="#">Logout</Link>
-          </Item>
-        ) : (
-          <Item
-            whileHover={{ scale: 1.1, y: -5 }}
-            whileTap={{ scale: 0.9, y: 0 }}
-            onClick={() => window.location.href = `https://ap-northeast-2-jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`}
-          >
-            <Link to="#">Login / Register</Link>
           </Item>
         )}
 
@@ -302,22 +313,6 @@ const Navbar = () => {
       </MenuItems>
     </NavContainer>
   );
-};
-
-// 콜백 처리를 위한 별도의 컴포넌트 생성
-const AuthCallback = () => {
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    
-    if (code) {
-      // 토큰 교환 로직
-      // 토큰 저장 후 메인 페이지로 리디렉션
-      window.location.href = 'https://d19kcxe6thj51s.cloudfront.net/';
-    }
-  }, []);
-
-  return <div>Processing authentication...</div>;
 };
 
 export default Navbar;

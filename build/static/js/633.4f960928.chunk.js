@@ -1,4 +1,4 @@
-"use strict";(self.webpackChunkwibe_test=self.webpackChunkwibe_test||[]).push([[633],{6633:(e,i,t)=>{t.r(i),t.d(i,{default:()=>p});var n=t(3229),s=(t(9950),t(6689)),a=t(1678),o=t(4414);const d=a.Ay.div`
+"use strict";(self.webpackChunkwibe_test=self.webpackChunkwibe_test||[]).push([[633],{6633:(e,i,t)=>{t.r(i),t.d(i,{default:()=>p});var n=t(3229),s=(t(9950),t(5616)),a=t(1678),o=t(4414);const d=a.Ay.div`
   position: absolute;
   top: 1rem;
   left: 1rem;
