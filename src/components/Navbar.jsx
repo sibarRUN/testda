@@ -198,23 +198,23 @@ const Navbar = () => {
   // Function to handle the 'BonGenie' button click
   const handleBonggenieClick = (event) => {
     event.preventDefault();
-    const user = userPool.getCurrentUser(); // Get the current user
+    const user = userPool.getCurrentUser();
 
     if (user) {
-      // If user exists, check the session
+      // 사용자가 존재하는 경우
       user.getSession((err, session) => {
         if (err || !session.isValid()) {
-          // If session is invalid, alert and redirect to login
-          alert("잘못된 접근입니다. 로그인해주세요.");
+          // 세션이 유효하지 않은 경우
+          alert("세션이 만료되었습니다. 다시 로그인해주세요.");
           window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
         } else {
-          // If session is valid, redirect to BonGenie page
+          // 세션이 유효한 경우 봉지니 페이지로 이동
           window.location.href = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
         }
       });
     } else {
-      // If no user is logged in, alert and redirect to login
-      alert("쒸이이발 줘엇같네.");
+      // 로그인하지 않은 경우
+      alert("로그인이 필요한 서비스입니다.");
       window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
     }
   };
