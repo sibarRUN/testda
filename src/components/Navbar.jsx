@@ -4,9 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocomotiveScroll } from 'react-locomotive-scroll';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import {
-  CognitoUserPool
-} from 'amazon-cognito-identity-js';
+import { CognitoUserPool } from 'amazon-cognito-identity-js';
 
 // Styled-components for styling the Navbar and its elements
 
@@ -90,6 +88,7 @@ const REDIRECT_URI = 'https://d19kcxe6thj51s.cloudfront.net';
 const poolData = {
   UserPoolId: 'ap-northeast-2_jczobrwlq',
   ClientId: 'e90hcf6rica8am3h81lcsuspe',
+  ClientSecret: 'qu21ju6vdii5mjq974ccasqklekr9ka43a5adaeko4rq9fo5lnk', // 클라이언트 보안키 추가
 };
 
 // Initialize the Cognito User Pool
@@ -127,9 +126,11 @@ const Navbar = () => {
       console.log("토큰 교환 시작, 코드:", code);
       const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
       
+      // Base64로 client_id와 client_secret를 인코딩
+      const clientCredentials = btoa(`${poolData.ClientId}:${poolData.ClientSecret}`);
+
       const params = new URLSearchParams();
       params.append('grant_type', 'authorization_code');
-      params.append('client_id', poolData.ClientId);
       params.append('code', code);
       params.append('redirect_uri', REDIRECT_URI);
 
@@ -140,6 +141,7 @@ const Navbar = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${clientCredentials}`, // Basic Authentication 헤더 추가
         },
         body: params
       });
@@ -169,14 +171,16 @@ const Navbar = () => {
         
         return true;
       } else {
-        const errorData = await response.text();
+        const errorData = await response.json();
         console.error('토큰 교환 실패:', errorData);
         setIsAuthenticated(false);
+        alert(`토큰 교환 실패: ${errorData.error_description || errorData.error}`);
         return false;
       }
     } catch (error) {
       console.error('토큰 교환 중 오류:', error);
       setIsAuthenticated(false);
+      alert('토큰 교환 중 오류가 발생했습니다. 다시 시도해주세요.');
       return false;
     }
   };
@@ -213,7 +217,7 @@ const Navbar = () => {
       }
     } else {
       console.log("미인증 상태 - 로그인 페이지로 리디렉션");
-      alert("BonGenie는 로그인 후 사용하실 수 있습니다?진짜로.");
+      alert("BonGenie는 로그인 후 사용하실 수 있습니다.");
       window.location.href = `${COGNITO_DOMAIN}/login?client_id=${poolData.ClientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=email+openid`;
     }
   };
