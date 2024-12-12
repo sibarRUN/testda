@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import React, { useState, useEffect } from 'react';
 import { useLocomotiveScroll } from 'react-locomotive-scroll';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   CognitoUserPool,
@@ -107,6 +107,55 @@ const Navbar = () => {
 
   // useNavigate hook from react-router-dom for navigation
   const navigate = useNavigate();
+
+  const location = useLocation();
+
+  useEffect(() => {
+    // URL에서 인증 코드 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('code');
+
+    if (authCode) {
+      // 인증 코드가 있으면 토큰으로 교환
+      exchangeCodeForToken(authCode);
+    }
+  }, []);
+
+  const exchangeCodeForToken = async (code) => {
+    try {
+      // Cognito 토큰 엔드포인트로 요청
+      const tokenEndpoint = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/oauth2/token`;
+      
+      const params = new URLSearchParams();
+      params.append('grant_type', 'authorization_code');
+      params.append('client_id', poolData.ClientId);
+      params.append('code', code);
+      params.append('redirect_uri', 'https://d19kcxe6thj51s.cloudfront.net');
+
+      const response = await fetch(tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params
+      });
+
+      if (response.ok) {
+        const tokens = await response.json();
+        // 토큰 저장 및 상태 업데이트
+        setIsAuthenticated(true);
+        
+        // URL에서 코드 파라미터 제거
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        console.error('토큰 교환 실패');
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('토큰 교환 중 오류 발생:', error);
+      setIsAuthenticated(false);
+    }
+  };
 
   // Effect to check if the user is already authenticated on component mount
   useEffect(() => {
@@ -281,6 +330,22 @@ const Navbar = () => {
       </MenuItems>
     </NavContainer>
   );
+};
+
+// 콜백 처리를 위한 별도의 컴포넌트 생성
+const AuthCallback = () => {
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code) {
+      // 토큰 교환 로직
+      // 토큰 저장 후 메인 페이지로 리디렉션
+      window.location.href = 'https://d19kcxe6thj51s.cloudfront.net/';
+    }
+  }, []);
+
+  return <div>Processing authentication...</div>;
 };
 
 export default Navbar;
