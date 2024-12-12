@@ -111,27 +111,34 @@ const Navbar = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // URL에서 인증 코드 확인
+    // URL에서 인증 코드를 확인하는 부분
     const urlParams = new URLSearchParams(window.location.search);
     const authCode = urlParams.get('code');
 
     if (authCode) {
-      // 인증 코드가 있으면 토큰으로 교환
+      // 인증 코드가 있으면 토큰으로 교환하는 함수 호출
+      console.log("인증 코드 발견:", authCode); // 디버깅용 로그
       exchangeCodeForToken(authCode);
     }
   }, []);
 
   const exchangeCodeForToken = async (code) => {
     try {
-      // Cognito 토큰 엔드포인트로 요청
+      console.log("토큰 교환 시작"); // 디버깅용 로그
+      
+      // Cognito 토큰 엔드포인트 URL 설정
       const tokenEndpoint = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/oauth2/token`;
       
+      // 요청에 필요한 파라미터 설정
       const params = new URLSearchParams();
       params.append('grant_type', 'authorization_code');
       params.append('client_id', poolData.ClientId);
       params.append('code', code);
       params.append('redirect_uri', 'https://d19kcxe6thj51s.cloudfront.net');
 
+      console.log("요청 파라미터:", params.toString()); // 디버깅용 로그
+
+      // Cognito 토큰 엔드포인트로 POST 요청
       const response = await fetch(tokenEndpoint, {
         method: 'POST',
         headers: {
@@ -140,30 +147,42 @@ const Navbar = () => {
         body: params
       });
 
+      console.log("응답 상태:", response.status); // 디버깅용 로그
+
       if (response.ok) {
+        // 응답이 성공적이면 토큰 정보를 추출
         const tokens = await response.json();
-        // 토큰 저장
+        console.log("토큰 수신 성공"); // 디버깅용 로그
+        
+        // localStorage에 토큰들을 저장
         localStorage.setItem('accessToken', tokens.access_token);
         localStorage.setItem('idToken', tokens.id_token);
         localStorage.setItem('refreshToken', tokens.refresh_token);
         
+        // 인증 상태를 true로 설정
         setIsAuthenticated(true);
         
-        // URL에서 코드 파라미터 제거
+        // URL에서 인증 코드 파라미터 제거
         window.history.replaceState({}, document.title, window.location.pathname);
+        
+        console.log("인증 처리 완료"); // 디버깅용 로그
       } else {
-        console.error('토큰 교환 실패');
+        // 응답이 실패면 에러 로그 출력
+        const errorData = await response.text();
+        console.error('토큰 교환 실패:', errorData);
         setIsAuthenticated(false);
       }
     } catch (error) {
+      // 예외가 발생하면 에러 로그 출력
       console.error('토큰 교환 중 오류 발생:', error);
       setIsAuthenticated(false);
     }
   };
 
-  // 컴포넌트 마운트 시 로그인 상태 확인
+  // 컴포넌트가 처음 로드될 때 localStorage에서 토큰 확인
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
+    console.log("저장된 액세스 토큰:", accessToken ? '존재' : '없음'); // 디버깅용 로그
     if (accessToken) {
       setIsAuthenticated(true);
     }
@@ -206,26 +225,23 @@ const Navbar = () => {
         handleLogout();
       }
     } else {
-      alert("로그인이 필요한 서비스입니다.");
+      alert("로그인이 필요한 서비스입니다.v3.9.5");
       window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
     }
   };
 
   // Function to handle logout
   const handleLogout = () => {
-    const user = userPool.getCurrentUser();
-    if (user) {
-      user.signOut(); // Sign out the user from Cognito
-      setIsAuthenticated(false); // Update authentication state
-      alert("로그아웃 되었습니다.");
-
-      // Redirect to Cognito logout endpoint to clear the session on the server
-      const logoutUrl = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/logout?client_id=${poolData.ClientId}&logout_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net`;
-      window.location.href = logoutUrl;
-    } else {
-      // If user is not logged in, alert
-      alert("이미 로그아웃 상태입니다.");
-    }
+    // localStorage에서 모든 토큰 제거
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('idToken');
+    localStorage.removeItem('refreshToken');
+    
+    setIsAuthenticated(false);
+    
+    // Cognito 로그아웃 URL로 리디렉션
+    const logoutUrl = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/logout?client_id=${poolData.ClientId}&logout_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net`;
+    window.location.href = logoutUrl;
   };
 
   return (
