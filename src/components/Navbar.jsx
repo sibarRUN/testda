@@ -110,78 +110,41 @@ const Navbar = () => {
 
   // Effect to check if the user is already authenticated on component mount
   useEffect(() => {
-    const user = userPool.getCurrentUser();
-    if (user) {
-      user.getSession((err, session) => {
-        if (!err && session.isValid()) {
-          setIsAuthenticated(true);
-        } else {
+    const checkAuth = async () => {
+      const user = userPool.getCurrentUser();
+      if (user) {
+        try {
+          const session = await new Promise((resolve, reject) => {
+            user.getSession((err, session) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(session);
+            });
+          });
+          
+          if (session.isValid()) {
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+            // 세션이 유효하지 않은 경우 로그아웃 처리
+            handleLogout();
+          }
+        } catch (err) {
+          console.error('세션 확인 중 오류 발생:', err);
           setIsAuthenticated(false);
         }
-      });
-    }
-  }, []);
+      } else {
+        setIsAuthenticated(false);
+      }
+    };
 
-  // Effect to handle the authorization code received from Cognito after login
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code'); // Get the "code" query parameter from the URL
-    if (code) {
-      // Prepare the data for token exchange
-      const data = new URLSearchParams();
-      data.append('grant_type', 'authorization_code');
-      data.append('client_id', poolData.ClientId);
-      data.append('code', code);
-      data.append('redirect_uri', 'https://d19kcxe6thj51s.cloudfront.net'); // Must match Cognito App Client settings
-
-      // Exchange the authorization code for tokens
-      fetch('https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/oauth2/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: data
-      })
-      .then(res => res.json())
-      .then(tokens => {
-        // Check if all tokens are present
-        if (tokens.id_token && tokens.access_token && tokens.refresh_token) {
-          // Create Cognito tokens
-          const idToken = new CognitoIdToken({ IdToken: tokens.id_token });
-          const accessToken = new CognitoAccessToken({ AccessToken: tokens.access_token });
-          const refreshToken = new CognitoRefreshToken({ RefreshToken: tokens.refresh_token });
-
-          // Create a Cognito User Session
-          const session = new CognitoUserSession({
-            IdToken: idToken,
-            AccessToken: accessToken,
-            RefreshToken: refreshToken
-          });
-
-          // Extract the username from the ID token
-          const username = idToken.payload['cognito:username'];
-
-          // Initialize a CognitoUser object
-          const user = new CognitoUser({
-            Username: username,
-            Pool: userPool
-          });
-
-          // Set the user's session
-          user.setSignInUserSession(session);
-
-          // Update authentication state
-          setIsAuthenticated(true);
-
-          // Remove the "code" query parameter from the URL
-          const newUrl = window.location.origin + window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
-        }
-      })
-      .catch(err => {
-        console.error("토큰 교환 실패: ", err);
-      });
-    }
+    checkAuth();
+    // 주기적으로 세션 상태 확인 (예: 5분마다)
+    const interval = setInterval(checkAuth, 300000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Function to handle scrolling to specific sections
@@ -196,24 +159,31 @@ const Navbar = () => {
   };
 
   // Function to handle the 'BonGenie' button click
-  const handleBonggenieClick = (event) => {
+  const handleBonggenieClick = async (event) => {
     event.preventDefault();
     const user = userPool.getCurrentUser();
 
     if (user) {
-      // 사용자가 존재하는 경우
-      user.getSession((err, session) => {
-        if (err || !session.isValid()) {
-          // 세션이 유효하지 않은 경우
-          alert("세션이 만료되었습니다. 다시 로그인해주세요.");
-          window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
-        } else {
-          // 세션이 유효한 경우 봉지니 페이지로 이동
+      try {
+        const session = await new Promise((resolve, reject) => {
+          user.getSession((err, session) => {
+            if (err) reject(err);
+            else resolve(session);
+          });
+        });
+
+        if (session.isValid()) {
           window.location.href = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
+        } else {
+          alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+          handleLogout();
         }
-      });
+      } catch (err) {
+        console.error('세션 확인 중 오류:', err);
+        alert("로그인 상태를 확인하는 중 오류가 발생했습니다.");
+        handleLogout();
+      }
     } else {
-      // 로그인하지 않은 경우
       alert("로그인이 필요한 서비스입니다.");
       window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
     }
