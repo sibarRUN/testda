@@ -138,6 +138,7 @@
         <input type="file" accept="image/*" onchange="handleImageChange(event)">
         <img id="uploadedImage" alt="Uploaded" style="display: none;">
         <div class="input-group">
+<<<<<<< HEAD
           <input type="number" id="height" placeholder="Height" required min="0">
           <span>cm</span>
         </div>
@@ -147,6 +148,17 @@
         </div>
         <div class="button-group">
           <button id="submitButton" type="submit" class="btn">Submit</button>
+=======
+          <input type="number" id="height" placeholder="Height" required style="height: 50px; font-size: 1.2rem;" min="0">
+          <span>cm</span>
+        </div>
+        <div class="input-group">
+          <input type="number" id="weight" placeholder="Weight" required style="height: 50px; font-size: 1.2rem;" min="0">
+          <span>kg</span>
+        </div>
+        <div class="button-group">
+          <button type="submit" class="btn">Submit</button>
+>>>>>>> 91a11642870ff2e91b209e7b0c06eec79ab86d42
           <button type="button" class="btn" onclick="history.back()">Back</button>
         </div>
       </form>
@@ -154,6 +166,7 @@
   </div>
 
   <script>
+<<<<<<< HEAD
     let isNewEntry = true;
 
     // 이미지 파일이 변경될 때 호출되는 함수
@@ -250,6 +263,20 @@
 
     // 페이지 로드 시 데이터 상태 확인
     window.onload = checkExistingData;
+=======
+    function handleImageChange(event) {
+      const image = document.getElementById('uploadedImage');
+      image.src = URL.createObjectURL(event.target.files[0]);
+      image.style.display = 'block';
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      const height = document.getElementById('height').value;
+      const weight = document.getElementById('weight').value;
+      alert(`Height: ${height} cm, Weight: ${weight} kg`);
+    }
+>>>>>>> 91a11642870ff2e91b209e7b0c06eec79ab86d42
   </script>
 </body>
 </html>
