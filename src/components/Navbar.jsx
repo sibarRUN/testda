@@ -88,9 +88,12 @@ const Item = styled(motion.li)`
 `;
 
 // Cognito User Pool configuration
+const COGNITO_DOMAIN = 'https://ap-northeast-2-jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
+const REDIRECT_URI = 'https://d19kcxe6thj51s.cloudfront.net';
+
 const poolData = {
-  UserPoolId: 'ap-northeast-2_jczobrwlq', // Replace with your Cognito User Pool ID
-  ClientId: 'e90hcf6rica8am3h81lcsuspe',  // Replace with your Cognito App Client ID
+  UserPoolId: 'ap-northeast-2_jczobrwlq',
+  ClientId: 'e90hcf6rica8am3h81lcsuspe',
 };
 
 // Initialize the Cognito User Pool
@@ -124,21 +127,15 @@ const Navbar = () => {
 
   const exchangeCodeForToken = async (code) => {
     try {
-      console.log("토큰 교환 시작"); // 디버깅용 로그
+      console.log("토큰 교환 시작");
+      const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
       
-      // Cognito 토큰 엔드포인트 URL 설정
-      const tokenEndpoint = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/oauth2/token`;
-      
-      // 요청에 필요한 파라미터 설정
       const params = new URLSearchParams();
       params.append('grant_type', 'authorization_code');
       params.append('client_id', poolData.ClientId);
       params.append('code', code);
-      params.append('redirect_uri', 'https://d19kcxe6thj51s.cloudfront.net');
+      params.append('redirect_uri', REDIRECT_URI);
 
-      console.log("요청 파라미터:", params.toString()); // 디버깅용 로그
-
-      // Cognito 토큰 엔드포인트로 POST 요청
       const response = await fetch(tokenEndpoint, {
         method: 'POST',
         headers: {
@@ -147,35 +144,23 @@ const Navbar = () => {
         body: params
       });
 
-      console.log("응답 상태:", response.status); // 디버깅용 로그
-
       if (response.ok) {
-        // 응답이 성공적이면 토큰 정보를 추출
         const tokens = await response.json();
-        console.log("토큰 수신 성공"); // 디버깅용 로그
-        
-        // localStorage에 토큰들을 저장
         localStorage.setItem('accessToken', tokens.access_token);
         localStorage.setItem('idToken', tokens.id_token);
         localStorage.setItem('refreshToken', tokens.refresh_token);
-        
-        // 인증 상태를 true로 설정
         setIsAuthenticated(true);
-        
-        // URL에서 인증 코드 파라미터 제거
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        console.log("인증 처리 완료"); // 디버깅용 로그
+        return true;
       } else {
-        // 응답이 실패면 에러 로그 출력
         const errorData = await response.text();
         console.error('토큰 교환 실패:', errorData);
         setIsAuthenticated(false);
+        return false;
       }
     } catch (error) {
-      // 예외가 발생하면 에러 로그 출력
-      console.error('토큰 교환 중 오류 발생:', error);
+      console.error('토큰 교환 중 오류:', error);
       setIsAuthenticated(false);
+      return false;
     }
   };
 
@@ -214,7 +199,7 @@ const Navbar = () => {
         });
 
         if (session.isValid()) {
-          window.location.href = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
+          window.location.href = `${REDIRECT_URI}/bongjini.html`;
         } else {
           alert("세션이 만료되었습니다. 다시 로그인해주세요.");
           handleLogout();
@@ -225,22 +210,20 @@ const Navbar = () => {
         handleLogout();
       }
     } else {
-      alert("로그인이 필요한 서비스입니다.v3.9.5");
-      window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`;
+      alert("로그인이 필요한 서비스입니다.");
+      window.location.href = `${COGNITO_DOMAIN}/login?client_id=${poolData.ClientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=email+openid`;
     }
   };
 
   // Function to handle logout
   const handleLogout = () => {
-    // localStorage에서 모든 토큰 제거
     localStorage.removeItem('accessToken');
     localStorage.removeItem('idToken');
     localStorage.removeItem('refreshToken');
     
     setIsAuthenticated(false);
     
-    // Cognito 로그아웃 URL로 리디렉션
-    const logoutUrl = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/logout?client_id=${poolData.ClientId}&logout_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net`;
+    const logoutUrl = `${COGNITO_DOMAIN}/logout?client_id=${poolData.ClientId}&logout_uri=${encodeURIComponent(REDIRECT_URI)}`;
     window.location.href = logoutUrl;
   };
 
@@ -302,7 +285,7 @@ const Navbar = () => {
           <Item
             whileHover={{ scale: 1.1, y: -5 }}
             whileTap={{ scale: 0.9, y: 0 }}
-            onClick={() => window.location.href = `https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`}
+            onClick={() => window.location.href = `https://ap-northeast-2-jczobrwlq.auth.ap-northeast-2.amazoncognito.com/login?client_id=${poolData.ClientId}&redirect_uri=https%3A%2F%2Fd19kcxe6thj51s.cloudfront.net&response_type=code&scope=email+openid`}
           >
             <Link to="#">Login / Register</Link>
           </Item>
