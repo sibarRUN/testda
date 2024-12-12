@@ -142,7 +142,11 @@ const Navbar = () => {
 
       if (response.ok) {
         const tokens = await response.json();
-        // 토큰 저장 및 상태 업데이트
+        // 토큰 저장
+        localStorage.setItem('accessToken', tokens.access_token);
+        localStorage.setItem('idToken', tokens.id_token);
+        localStorage.setItem('refreshToken', tokens.refresh_token);
+        
         setIsAuthenticated(true);
         
         // URL에서 코드 파라미터 제거
@@ -157,43 +161,12 @@ const Navbar = () => {
     }
   };
 
-  // Effect to check if the user is already authenticated on component mount
+  // 컴포넌트 마운트 시 로그인 상태 확인
   useEffect(() => {
-    const checkAuth = async () => {
-      const user = userPool.getCurrentUser();
-      if (user) {
-        try {
-          const session = await new Promise((resolve, reject) => {
-            user.getSession((err, session) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(session);
-            });
-          });
-          
-          if (session.isValid()) {
-            setIsAuthenticated(true);
-          } else {
-            setIsAuthenticated(false);
-            // 세션이 유효하지 않은 경우 로그아웃 처리
-            handleLogout();
-          }
-        } catch (err) {
-          console.error('세션 확인 중 오류 발생:', err);
-          setIsAuthenticated(false);
-        }
-      } else {
-        setIsAuthenticated(false);
-      }
-    };
-
-    checkAuth();
-    // 주기적으로 세션 상태 확인 (예: 5분마다)
-    const interval = setInterval(checkAuth, 300000);
-    
-    return () => clearInterval(interval);
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      setIsAuthenticated(true);
+    }
   }, []);
 
   // Function to handle scrolling to specific sections
