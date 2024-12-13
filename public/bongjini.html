@@ -187,8 +187,6 @@
             const success = await exchangeCodeForToken(code);
             if (success) window.history.replaceState({}, document.title, window.location.pathname);
         }
-
-        checkExistingData(); // 기존 데이터 여부 확인 및 Submit 버튼 라벨 업데이트
     };
 
     window.onload = init;
