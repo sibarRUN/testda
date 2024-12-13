@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bongjini</title>
+  <style>
+    @keyframes moveText {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    body {
+      font-family: 'Kaushan Script', sans-serif;
+      background-image: url('suit.webp');
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .container {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .explain-container, .form-container {
+      text-align: center;
+      background-color: rgba(50, 50, 50, 0.9);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .explain-container img {
+      width: 150px;
+      height: auto;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      color: #ccc;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    input[type="file"], input[type="number"], .btn {
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1.2rem;
+      border: 1px solid #555;
+      border-radius: 5px;
+      outline: none;
+      margin: 5px 0;
+    }
+
+    .btn {
+      background-color: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #555;
+      transform: translateY(-3px);
+    }
+
+    img#uploadedImage {
+      width: 100px;
+      height: 100px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="explain-container">
+      <img src="explain.png" alt="Explanation">
+      <p>정면이 보이는 사진을 첨부하세요. 잘못된 사진은 추천에 영향을 줍니다.</p>
+    </div>
+    <div class="form-container">
+      <h1>BONGENIE</h1>
+      <form onsubmit="handleSubmit(event)">
+        <input type="file" accept="image/*" onchange="handleImageChange(event)">
+        <img id="uploadedImage" alt="Uploaded" style="display: none;">
+        <input type="number" id="height" placeholder="Height (cm)" required min="0">
+        <input type="number" id="weight" placeholder="Weight (kg)" required min="0">
+        <button type="submit" class="btn" id="submitButton">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const COGNITO_DOMAIN = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
+    const CLIENT_ID = 'e90hcf6rica8am3h81lcsuspe';
+    const REDIRECT_URI = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
+    const apiUrl = 'https://l4194gow55.execute-api.ap-northeast-2.amazonaws.com/dev/bongjini';
+    let isNewEntry = true;
+
+    const getTokenFromLocalStorage = () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        redirectToLogin();
+        throw new Error('Token missing');
+      }
+      return token;
+    };
+
+    const redirectToLogin = () => {
+      const loginUrl = `${COGNITO_DOMAIN}/login?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=email+openid`;
+      window.location.href = loginUrl;
+    };
+
+    const handleImageChange = (event) => {
+      const image = document.getElementById('uploadedImage');
+<<<<<<< HEAD
+      image.src = URL.createObjectURL(event.target.files[0]);
+      image.style.display = 'block';
+=======
+      const file = event.target.files[0];
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Image = reader.result.split(',')[1];  // Base64 부분만 추출
+          image.src = reader.result;
+          image.style.display = 'block';
+
+          // Base64 이미지를 Lambda 함수로 전송
+          uploadImageToS3(base64Image);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const uploadImageToS3 = async (base64Image) => {
+      const token = getTokenFromLocalStorage();
+      const requestBody = {
+        image: base64Image,
+      };
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Image uploaded successfully:', data.imageUrl);  // S3 URL 반환
+          // 이미지 URL을 화면에 표시하는 코드 추가
+          alert(`Image uploaded: ${data.imageUrl}`);
+        } else {
+          throw new Error('Error uploading image');
+        }
+      } catch (error) {
+        console.error('Error:', error.message);
+        alert('Failed to upload image');
+      }
+>>>>>>> 6456360 (v 5.1.0)
+    };
+
+    const exchangeCodeForToken = async (code) => {
+      try {
+        const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
+        const params = new URLSearchParams();
+        params.append('grant_type', 'authorization_code');
+        params.append('code', code);
+        params.append('redirect_uri', REDIRECT_URI);
+        params.append('client_id', CLIENT_ID);
+
+        const response = await fetch(tokenEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
+        });
+
+        if (response.ok) {
+          const tokens = await response.json();
+          localStorage.setItem('accessToken', tokens.access_token);
+          return true;
+        } else {
+          console.error('Failed to exchange code for token');
+          return false;
+        }
+      } catch (error) {
+        console.error('Error during token exchange:', error);
+      }
+    };
+
+    const checkExistingData = async () => {
+      try {
+        const token = getTokenFromLocalStorage();
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Existing data found:', data);
+          isNewEntry = false;
+        } else if (response.status === 404) {
+          isNewEntry = true;
+        } else {
+          throw new Error('Error checking data');
+        }
+      } catch (error) {
+        console.error('Error checking data:', error);
+      }
+      updateSubmitButtonLabel();
+    };
+
+    const updateSubmitButtonLabel = () => {
+      const button = document.getElementById('submitButton');
+      button.textContent = isNewEntry ? 'Submit' : 'Update Data (PATCH)';
+    };
+
+    const handleSubmit = async (event) => {
+      event.preventDefault();
+      const height = document.getElementById('height').value;
+      const weight = document.getElementById('weight').value;
+
+      try {
+        const token = getTokenFromLocalStorage();
+        const response = await fetch(apiUrl, {
+          method: isNewEntry ? 'POST' : 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ Height: parseFloat(height), Weight: parseFloat(weight) }),
+        });
+
+        if (!response.ok) throw new Error('Error submitting data');
+        const data = await response.json();
+        alert(`Data ${isNewEntry ? 'added' : 'updated'} successfully.`);
+        isNewEntry = false;
+        updateSubmitButtonLabel();
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+      }
+    };
+
+    const init = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+
+      if (code) {
+        const success = await exchangeCodeForToken(code);
+        if (success) window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      checkExistingData();
+    };
+
+    window.onload = init;
+  </script>
+</body>
+</html>
