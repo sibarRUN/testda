@@ -99,7 +99,6 @@
     <div class="form-container">
       <h1>BONGENIE</h1>
       <form onsubmit="handleSubmit(event)">
-        <input type="file" accept="image/*" onchange="handleImageChange(event)">
         <img id="uploadedImage" alt="Uploaded" style="display: none;">
         <input type="number" id="height" placeholder="Height (cm)" required min="0">
         <input type="number" id="weight" placeholder="Weight (kg)" required min="0">
@@ -112,12 +111,11 @@
     const COGNITO_DOMAIN = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
     const CLIENT_ID = 'e90hcf6rica8am3h81lcsuspe';
     const REDIRECT_URI = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
-<<<<<<< HEAD
     const apiUrl = 'https://lnshf6x8be.execute-api.ap-northeast-2.amazonaws.com/dev/invokeTrigger_ju'; // 새로운 API Gateway URL
     let isNewEntry = true;
 
     const getTokenFromLocalStorage = () => {
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem('idToken');
         if (!token) {
             redirectToLogin();
             throw new Error('Token missing');
@@ -191,165 +189,6 @@
         }
 
         checkExistingData(); // 기존 데이터 여부 확인 및 Submit 버튼 라벨 업데이트
-=======
-    const apiUrl = 'https://lnshf6x8be.execute-api.ap-northeast-2.amazonaws.com/dev/dynamo';  // 수정된 URL
-    let isNewEntry = true;
-
-    const getTokenFromLocalStorage = () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        redirectToLogin();
-        throw new Error('Token missing');
-      }
-      return token;
-    };
-
-    const redirectToLogin = () => {
-      const loginUrl = `${COGNITO_DOMAIN}/login?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=email+openid`;
-      window.location.href = loginUrl;
-    };
-
-    const handleImageChange = (event) => {
-      const image = document.getElementById('uploadedImage');
-      const file = event.target.files[0];
-
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64Image = reader.result.split(',')[1];  // Base64 부분만 추출
-          image.src = reader.result;
-          image.style.display = 'block';
-
-          // Base64 이미지를 Lambda 함수로 전송
-          uploadImageToS3(base64Image);
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-
-    const uploadImageToS3 = async (base64Image) => {
-      const token = getTokenFromLocalStorage();
-      const requestBody = {
-        image: base64Image,
-      };
-
-      try {
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Image uploaded successfully:', data.imageUrl);  // S3 URL 반환
-          // 이미지 URL을 화면에 표시하는 코드 추가
-          alert(`Image uploaded: ${data.imageUrl}`);
-        } else {
-          throw new Error('Error uploading image');
-        }
-      } catch (error) {
-        console.error('Error:', error.message);
-        alert('Failed to upload image');
-      }
-    };
-
-    const exchangeCodeForToken = async (code) => {
-      try {
-        const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
-        const params = new URLSearchParams();
-        params.append('grant_type', 'authorization_code');
-        params.append('code', code);
-        params.append('redirect_uri', REDIRECT_URI);
-        params.append('client_id', CLIENT_ID);
-
-        const response = await fetch(tokenEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
-        });
-
-        if (response.ok) {
-          const tokens = await response.json();
-          localStorage.setItem('accessToken', tokens.access_token);
-          return true;
-        } else {
-          console.error('Failed to exchange code for token');
-          return false;
-        }
-      } catch (error) {
-        console.error('Error during token exchange:', error);
-      }
-    };
-
-    const checkExistingData = async () => {
-      try {
-        const token = getTokenFromLocalStorage();
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Existing data found:', data);
-          isNewEntry = false;
-        } else if (response.status === 404) {
-          isNewEntry = true;
-        } else {
-          throw new Error('Error checking data');
-        }
-      } catch (error) {
-        console.error('Error checking data:', error);
-      }
-      updateSubmitButtonLabel();
-    };
-
-    const updateSubmitButtonLabel = () => {
-      const button = document.getElementById('submitButton');
-      button.textContent = isNewEntry ? 'Submit' : 'Update Data (PATCH)';
-    };
-
-    const handleSubmit = async (event) => {
-      event.preventDefault();
-      const height = document.getElementById('height').value;
-      const weight = document.getElementById('weight').value;
-
-      try {
-        const token = getTokenFromLocalStorage();
-        const response = await fetch(apiUrl, {
-          method: isNewEntry ? 'POST' : 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ Height: parseFloat(height), Weight: parseFloat(weight) }),
-        });
-
-        if (!response.ok) throw new Error('Error submitting data');
-        const data = await response.json();
-        alert(`Data ${isNewEntry ? 'added' : 'updated'} successfully.`);
-        isNewEntry = false;
-        updateSubmitButtonLabel();
-      } catch (error) {
-        alert(`Error: ${error.message}`);
-      }
-    };
-
-    const init = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-
-      if (code) {
-        const success = await exchangeCodeForToken(code);
-        if (success) window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      checkExistingData();
->>>>>>> e061cdb13a6648ea2a9bbbe48d19ffbda5322113
     };
 
     window.onload = init;
