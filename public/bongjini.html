@@ -221,6 +221,12 @@
       const weight = document.getElementById('weight').value;
       const fileInput = document.querySelector('input[type="file"]');
       const file = fileInput.files[0];
+      const idToken = localStorage.getItem('idToken');
+      if (!idToken) {
+        alert('로그인이 필요합니다.');
+        redirectToLogin();
+        return;
+      }
 
       console.log('Form data:', {height, weight, file: file ? file.name : null});
 
