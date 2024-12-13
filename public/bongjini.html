@@ -223,6 +223,13 @@
         return;
       }
 
+      const requestBody = {
+        user_id: user_id,
+        height: parseFloat(height),
+        weight: parseFloat(weight),
+        file_data: uploadedBase64Image,
+      };
+
       try {
         console.log('Fetching token from storage...');
         const token = getTokenFromLocalStorage();
