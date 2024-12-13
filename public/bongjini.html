@@ -223,19 +223,18 @@
         return;
       }
 
-      const requestBody = {
-        user_id: user_id,
-        height: parseFloat(height),
-        weight: parseFloat(weight),
-        file_data: uploadedBase64Image,
-      };
-
       try {
         console.log('Fetching token from storage...');
         const token = getTokenFromLocalStorage();
 
         console.log('Extracting user_id from idToken...');
         const user_id = getUserIdFromToken();
+        const requestBody = {
+          user_id: user_id,
+          height: parseFloat(height),
+          weight: parseFloat(weight),
+          file_data: uploadedBase64Image,
+        };
 
         console.log('Sending data to API:', {
           user_id: user_id,
