@@ -249,7 +249,7 @@
           method: 'POST',
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${user_id}`,
+            "Authorization": `Bearer ${idToken}`,
           },
           body: JSON.stringify(requestBody),
         });
