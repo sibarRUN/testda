@@ -118,6 +118,7 @@
 
     const exchangeCodeForToken = async (code) => {
       try {
+        console.log('Exchanging code for token...');
         const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
         const params = new URLSearchParams();
         params.append('grant_type', 'authorization_code');
@@ -132,8 +133,8 @@
         });
 
         if (response.ok) {
+          console.log('Token exchange successful');
           const tokens = await response.json();
-          // 응답으로 받은 토큰을 localStorage에 저장
           localStorage.setItem('idToken', tokens.id_token);
           localStorage.setItem('accessToken', tokens.access_token);
           if (tokens.refresh_token) {
@@ -141,7 +142,7 @@
           }
           return true;
         } else {
-          console.error('Failed to exchange code for token');
+          console.error('Failed to exchange code for token', response.status, response.statusText);
           return false;
         }
       } catch (error) {
@@ -151,8 +152,10 @@
     };
 
     const getTokenFromLocalStorage = () => {
+      console.log('Getting idToken from localStorage...');
       const token = localStorage.getItem('idToken');
       if (!token) {
+        console.error('No token found, redirecting to login');
         redirectToLogin();
         throw new Error('Token missing');
       }
@@ -160,23 +163,42 @@
     };
 
     const redirectToLogin = () => {
+      console.log('Redirecting to Cognito login page');
       const loginUrl = `${COGNITO_DOMAIN}/login?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=email+openid`;
       window.location.href = loginUrl;
+    };
+
+    const getUserIdFromToken = () => {
+      console.log('Decoding user_id from idToken...');
+      const idToken = localStorage.getItem('idToken');
+      if (!idToken) {
+        throw new Error('No idToken found');
+      }
+
+      const tokenParts = idToken.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid idToken format');
+      }
+
+      const payload = JSON.parse(atob(tokenParts[1]));
+      const userId = payload.sub;
+      console.log('Extracted user_id:', userId);
+      return userId;
     };
 
     const handleImageChange = (event) => {
       const image = document.getElementById('uploadedImage');
       const file = event.target.files[0];
 
+      console.log('Image selected:', file ? file.name : 'No file selected');
       if (file) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          // Base64 인코딩된 전체 문자열에서 데이터 부분만 추출
           const base64Image = reader.result.split(',')[1];
           image.src = reader.result;
           image.style.display = 'block';
-          // 전역 변수에 Base64 이미지 저장
           uploadedBase64Image = base64Image;
+          console.log('Image successfully converted to Base64');
         };
         reader.readAsDataURL(file);
       } else {
@@ -186,23 +208,34 @@
 
     const handleSubmit = async (event) => {
       event.preventDefault(); // 기본 폼 제출 방지
+      console.log('Submit button clicked');
 
       const height = document.getElementById('height').value;
       const weight = document.getElementById('weight').value;
       const fileInput = document.querySelector('input[type="file"]');
       const file = fileInput.files[0];
 
+      console.log('Form data:', {height, weight, file: file ? file.name : null});
+
       if (!height || !weight || !file || !uploadedBase64Image) {
+        console.warn('Form validation failed - missing fields');
         alert('모든 필드를 입력하세요.');
         return;
       }
 
       try {
+        console.log('Fetching token from storage...');
         const token = getTokenFromLocalStorage();
 
-        // 여기에서 user_id를 요청에 포함
-        // 실제 구현에서는 로그인한 사용자의 정보를 바탕으로 user_id를 설정
-        const user_id = "some_user_id"; // 예: 하드코딩한 user_id
+        console.log('Extracting user_id from idToken...');
+        const user_id = getUserIdFromToken();
+
+        console.log('Sending data to API:', {
+          user_id: user_id,
+          height: parseFloat(height),
+          weight: parseFloat(weight),
+          file_data: uploadedBase64Image,
+        });
 
         const response = await fetch(apiUrl, {
           method: 'POST',
@@ -219,10 +252,12 @@
         });
 
         if (!response.ok) {
+          console.error('API 호출 실패:', response.status, response.statusText);
           throw new Error(`API 호출 실패: ${response.statusText}`);
         }
 
         const data = await response.json();
+        console.log('API response:', data);
         alert(`Data processed successfully: ${JSON.stringify(data)}`);
       } catch (error) {
         console.error('API 호출 오류:', error);
@@ -231,12 +266,19 @@
     };
 
     const init = async () => {
+      console.log('Initializing page...');
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
 
       if (code) {
+        console.log('Authorization code detected, attempting token exchange');
         const success = await exchangeCodeForToken(code);
-        if (success) window.history.replaceState({}, document.title, window.location.pathname);
+        if (success) {
+          console.log('Token exchange success, cleaning up URL...');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } else {
+        console.log('No code detected, user may need to login');
       }
     };
 
