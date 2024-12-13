@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<<<<<<< HEAD
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+=======
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+>>>>>>> e1b8c42 (v 7.0.3)
   <title>Bongjini</title>
   <style>
     @keyframes moveText {
@@ -43,6 +48,16 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
 
+<<<<<<< HEAD
+=======
+    .explain-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+>>>>>>> e1b8c42 (v 7.0.3)
     .explain-container img {
       width: 150px;
       height: auto;
@@ -60,13 +75,33 @@
       gap: 1rem;
     }
 
+<<<<<<< HEAD
     input[type="file"], input[type="number"], .btn {
       width: 100%;
+=======
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+
+    img {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 1rem;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="number"] {
+>>>>>>> e1b8c42 (v 7.0.3)
       padding: 0.8rem;
       font-size: 1.2rem;
       border: 1px solid #555;
       border-radius: 5px;
       outline: none;
+<<<<<<< HEAD
       margin: 5px 0;
     }
 
@@ -74,6 +109,24 @@
       background-color: #333;
       color: #fff;
       border: none;
+=======
+      transition: border-color 0.3s ease;
+      margin-right: 0.5rem;
+      height: 50px;
+    }
+
+    input[type="number"]:focus {
+      border-color: #888;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+>>>>>>> e1b8c42 (v 7.0.3)
       cursor: pointer;
       transition: background-color 0.3s ease, transform 0.3s ease;
     }
@@ -83,32 +136,76 @@
       transform: translateY(-3px);
     }
 
+<<<<<<< HEAD
     img#uploadedImage {
       width: 100px;
       height: 100px;
       margin-top: 10px;
     }
   </style>
+=======
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
+>>>>>>> e1b8c42 (v 7.0.3)
 </head>
 <body>
   <div class="container">
     <div class="explain-container">
+<<<<<<< HEAD
       <img src="explain.png" alt="Explanation" />
       <p>정면이 보이는 사진을 첨부하세요. 잘못된 사진은 추천에 영향을 줍니다.</p>
     </div>
+=======
+      <img src="explain.png" alt="Explanation">
+      <p>사진 파일 첨부시<br>
+        위의 사진과 같이<br>
+        정면이 보이는 사진을<br>
+        넣어주세요.<br>
+        사진을 잘못 첨부하면<br>
+        옷 추천을 제대로 못합니다.</p>
+    </div>
+
+>>>>>>> e1b8c42 (v 7.0.3)
     <div class="form-container">
       <h1>BONGENIE</h1>
       <form onsubmit="handleSubmit(event)">
         <input type="file" accept="image/*" onchange="handleImageChange(event)">
         <img id="uploadedImage" alt="Uploaded" style="display: none;">
+<<<<<<< HEAD
         <input type="number" id="height" placeholder="Height (cm)" required min="0">
         <input type="number" id="weight" placeholder="Weight (kg)" required min="0">
         <button type="submit" class="btn" id="submitButton">Submit</button>
+=======
+        
+        <p style="color: #ccc; margin-bottom: 0.5rem;">키는 250cm를 초과할 수 없습니다.</p>
+        <div class="input-group">
+          <input type="number" id="height" placeholder="Height" required style="height: 50px; font-size: 1.2rem;" min="0" max="250">
+          <span>cm</span>
+        </div>
+        
+        <p style="color: #ccc; margin-bottom: 0.5rem;">몸무게는 300kg를 초과할 수 없습니다.</p>
+        <div class="input-group">
+          <input type="number" id="weight" placeholder="Weight" required style="height: 50px; font-size: 1.2rem;" min="0" max="300">
+          <span>kg</span>
+        </div>
+        
+        <div class="button-group">
+          <button type="submit" class="btn">Submit</button>
+          <button type="button" class="btn" onclick="history.back()">Back</button>
+        </div>
+>>>>>>> e1b8c42 (v 7.0.3)
       </form>
     </div>
   </div>
 
   <script>
+<<<<<<< HEAD
     const COGNITO_DOMAIN = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
     const CLIENT_ID = 'e90hcf6rica8am3h81lcsuspe';
     const CLIENT_SECRET = 'qu21ju6vdii5mjq974ccasqklekr9ka43a5adaeko4rq9fo5lnk';
@@ -286,6 +383,68 @@
     };
 
     window.onload = init;
+=======
+    function handleImageChange(event) {
+      const image = document.getElementById('uploadedImage');
+      image.src = URL.createObjectURL(event.target.files[0]);
+      image.style.display = 'block';
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      const height = document.getElementById('height').value;
+      const weight = document.getElementById('weight').value;
+      const imageFile = document.querySelector('input[type="file"]').files[0];
+
+      if (!imageFile) {
+        Swal.fire({
+          icon: 'warning',
+          title: '이미지 첨부 필요',
+          text: '옷 추천을 위해 이미지를 첨부해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#3085d6',
+          background: 'rgba(50, 50, 50, 0.9)',
+          color: '#fff'
+        });
+        return;
+      }
+
+      if (height > 250) {
+        Swal.fire({
+          icon: 'error',
+          title: '키 입력 오류',
+          text: '키는 250cm를 초과할 수 없습니다.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#3085d6',
+          background: 'rgba(50, 50, 50, 0.9)',
+          color: '#fff'
+        });
+        return;
+      }
+
+      if (weight > 300) {
+        Swal.fire({
+          icon: 'error',
+          title: '몸무게 입력 오류',
+          text: '몸무게는 300kg를 초과할 수 없습니다.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#3085d6',
+          background: 'rgba(50, 50, 50, 0.9)',
+          color: '#fff'
+        });
+        return;
+      }
+
+      // FormData 객체 생성하여 이미지와 데이터 전송
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      formData.append('height', height);
+      formData.append('weight', weight);
+
+      // loading.html로 이동하면서 데이터 전달
+      window.location.href = `loading.html?height=${height}&weight=${weight}`;
+    }
+>>>>>>> e1b8c42 (v 7.0.3)
   </script>
 </body>
 </html>
