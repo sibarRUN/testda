@@ -111,6 +111,7 @@
   <script>
     const COGNITO_DOMAIN = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
     const CLIENT_ID = 'e90hcf6rica8am3h81lcsuspe';
+    const CLIENT_SECRET = 'qu21ju6vdii5mjq974ccasqklekr9ka43a5adaeko4rq9fo5lnk';
     const REDIRECT_URI = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
     const apiUrl = 'https://lnshf6x8be.execute-api.ap-northeast-2.amazonaws.com/dev/invokeTrigger_ju';
 
@@ -126,9 +127,15 @@
         params.append('redirect_uri', REDIRECT_URI);
         params.append('client_id', CLIENT_ID);
 
+        // Base64 인코딩: client_id:client_secret
+        const basicAuth = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
+
         const response = await fetch(tokenEndpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${basicAuth}`
+          },
           body: params.toString(),
         });
 
@@ -236,12 +243,7 @@
           file_data: uploadedBase64Image,
         };
 
-        console.log('Sending data to API:', {
-          user_id: user_id,
-          height: parseFloat(height),
-          weight: parseFloat(weight),
-          file_data: uploadedBase64Image,
-        });
+        console.log('Sending data to API:', requestBody);
 
         const response = await fetch(apiUrl, {
           method: 'POST',
@@ -249,12 +251,7 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${user_id}`,
           },
-          body: JSON.stringify({
-            user_id: user_id,
-            height: parseFloat(height),
-            weight: parseFloat(weight),
-            file_data: uploadedBase64Image,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
