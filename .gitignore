@@ -12,6 +12,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+<<<<<<< HEAD
 #sex
 
 #sexking
@@ -19,3 +20,6 @@ yarn-error.log*
 #supersex
 
 #oh yas
+=======
+#sex
+>>>>>>> e1b8c42 (v 7.0.3)

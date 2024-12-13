@@ -312,7 +312,11 @@ const Navbar = () => {
           whileTap={{ scale: 0.9, y: 0 }}
           onClick={handleBonggenieClick}
         >
+<<<<<<< HEAD
           <Link to="#">BonGenieV5</Link>
+=======
+          <Link to="#">BonGenie</Link>
+>>>>>>> e1b8c42 (v 7.0.3)
         </Item>
       </MenuItems>
     </NavContainer>
