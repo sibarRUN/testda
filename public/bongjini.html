@@ -153,70 +153,58 @@
   <script>
     const COGNITO_DOMAIN = 'https://ap-northeast-2jczobrwlq.auth.ap-northeast-2.amazoncognito.com';
     const CLIENT_ID = 'e90hcf6rica8am3h81lcsuspe';
-    const CLIENT_SECRET = 'qu21ju6vdii5mjq974ccasqklekr9ka43a5adaeko4rq9fo5lnk'; // 추가된 클라이언트 보안키
     const REDIRECT_URI = 'https://d19kcxe6thj51s.cloudfront.net/bongjini.html';
     const apiUrl = 'https://lnshf6x8be.execute-api.ap-northeast-2.amazonaws.com/dev/invokeTrigger_ju';
 
-    let uploadedBase64Image = null; // 전역 변수로 이미지 Base64 데이터 관리
+    let uploadedBase64Image = null;
+    let idToken = null;
 
-    // 이미지 핸들러
+    // URL에서 토큰 추출
+    const extractTokenFromUrl = () => {
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      idToken = params.get('id_token');
+      if (!idToken) redirectToLogin();
+    };
+
+    // Cognito 로그인 페이지로 리디렉션
+    const redirectToLogin = () => {
+      const loginUrl = `${COGNITO_DOMAIN}/login?client_id=${CLIENT_ID}&response_type=token&scope=openid&redirect_uri=${REDIRECT_URI}`;
+      window.location.href = loginUrl;
+    };
+
+    // 이미지 처리
     const handleImageChange = (event) => {
-      const image = document.getElementById('uploadedImage');
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          const base64Image = reader.result.split(',')[1];
-          image.src = reader.result;
-          image.style.display = 'block';
-          uploadedBase64Image = base64Image;
+          uploadedBase64Image = reader.result.split(',')[1];
+          document.getElementById('uploadedImage').src = reader.result;
+          document.getElementById('uploadedImage').style.display = 'block';
         };
         reader.readAsDataURL(file);
       }
     };
 
-    // 토큰 요청 함수
-    const fetchAccessToken = async () => {
-      const tokenUrl = `${COGNITO_DOMAIN}/oauth2/token`;
-      const authHeader = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
-
-      const response = await fetch(tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${authHeader}`
-        },
-        body: new URLSearchParams({
-          grant_type: 'client_credentials',
-          redirect_uri: REDIRECT_URI,
-        })
-      });
-
-      const data = await response.json();
-      return data.access_token;
-    };
-
-    // 데이터 전송 함수
+    // 데이터 전송
     const handleSubmit = async (event) => {
       event.preventDefault();
 
       const height = document.getElementById('height').value;
       const weight = document.getElementById('weight').value;
 
-      if (!height || !weight || !uploadedBase64Image) {
-        alert('모든 필드를 입력하세요.');
+      if (!idToken) {
+        alert('로그인이 필요합니다.');
+        redirectToLogin();
         return;
       }
 
       try {
-        const accessToken = await fetchAccessToken();
-        console.log('Access Token:', accessToken);
-
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${idToken}`,
           },
           body: JSON.stringify({
             height: parseFloat(height),
@@ -225,15 +213,17 @@
           }),
         });
 
-        if (!response.ok) {
-          throw new Error('API 호출 실패');
-        }
-
+        if (!response.ok) throw new Error('API 호출 실패');
         const data = await response.json();
-        alert(`Data processed successfully: ${JSON.stringify(data)}`);
+        alert('Data successfully processed!');
       } catch (error) {
         alert(`오류: ${error.message}`);
       }
+    };
+
+    // 초기 로드 시 토큰 추출
+    window.onload = () => {
+      extractTokenFromUrl();
     };
   </script>
 </body>
