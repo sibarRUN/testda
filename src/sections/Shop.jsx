@@ -10,9 +10,6 @@ import img3 from "../assets/Images/3.webp";
 import img4 from "../assets/Images/4.webp";
 import img5 from "../assets/Images/5.webp";
 import img6 from "../assets/Images/6.webp";
-import img7 from "../assets/Images/7.webp";
-import img8 from "../assets/Images/8.webp";
-import img9 from "../assets/Images/9.webp";
 import img10 from "../assets/Images/10.webp";
 
 const Section = styled(motion.section)`
@@ -208,7 +205,7 @@ const Shop = () => {
           fabrics.
           <br /> <br />
           We have lots of different clothing options like shoes, jackets and
-          dresses. Not only clothes but we also provide unique Jewellery as
+          dresses. Not only clothes but we also provide unique  as
           well. It is great for us to carry our new clothes all around the
           country and look different.
         </p>
@@ -220,9 +217,6 @@ const Shop = () => {
         <Product img={img2} title="Tops" />
         <Product img={img5} title="Blazers" />
         <Product img={img6} title="Suits" />
-        <Product img={img7} title="Antiques" />
-        <Product img={img8} title="Jewellery" />
-        <Product img={img9} title="Watches" />
         <Product img={img10} title="Special Edition" />
       </Right>
     </Section>
