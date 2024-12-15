@@ -88,21 +88,63 @@
       height: 100px;
       margin-top: 10px;
     }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      width: 100%;
+    }
+
+    .input-group div {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .input-group input {
+      flex: 1;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- 설명 영역 -->
     <div class="explain-container">
       <img src="explain.png" alt="Explanation" />
-      <p>정면이 보이는 사진을 첨부하세요. 잘못된 사진은 추천에 영향을 줍니다.</p>
+      <p>정면이 보이는<br />사진을 첨부하세요.<br />잘못된 사진은<br />추천에 영향을 줍니다.</p>
     </div>
+
+    <!-- 폼 영역 -->
     <div class="form-container">
       <h1>BONGENIE</h1>
       <form onsubmit="handleSubmit(event)">
+        <!-- 파일 업로드 -->
         <input type="file" accept="image/*" onchange="handleImageChange(event)">
         <img id="uploadedImage" alt="Uploaded" style="display: none;">
-        <input type="number" id="height" placeholder="Height (cm)" required min="0">
-        <input type="number" id="weight" placeholder="Weight (kg)" required min="0">
+
+        <!-- 키 입력 -->
+        <div class="input-group">
+          <span>140~200까지 입력 가능</span>
+          <div>
+            <input type="number" id="height" placeholder="Height (cm)" required min="140" max="200">
+            <span>cm</span>
+          </div>
+        </div>
+
+        <!-- 몸무게 입력 -->
+        <div class="input-group">
+          <span>40~200까지 입력 가능</span>
+          <div>
+            <input type="number" id="weight" placeholder="Weight (kg)" required min="40" max="200">
+            <span>kg</span>
+          </div>
+        </div>
+
+        <!-- 제출 버튼 -->
         <button type="submit" class="btn" id="submitButton">Submit</button>
       </form>
     </div>
@@ -116,81 +158,9 @@
 
     let uploadedBase64Image = null; // 전역 변수로 이미지 Base64 데이터 관리
 
-    const exchangeCodeForToken = async (code) => {
-      try {
-        console.log('Exchanging code for token...');
-        const tokenEndpoint = `${COGNITO_DOMAIN}/oauth2/token`;
-        const params = new URLSearchParams();
-        params.append('grant_type', 'authorization_code');
-        params.append('code', code);
-        params.append('redirect_uri', REDIRECT_URI);
-        params.append('client_id', CLIENT_ID);
-
-        const response = await fetch(tokenEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
-        });
-
-        if (response.ok) {
-          console.log('Token exchange successful');
-          const tokens = await response.json();
-          localStorage.setItem('idToken', tokens.id_token);
-          localStorage.setItem('accessToken', tokens.access_token);
-          if (tokens.refresh_token) {
-            localStorage.setItem('refreshToken', tokens.refresh_token);
-          }
-          return true;
-        } else {
-          console.error('Failed to exchange code for token', response.status, response.statusText);
-          return false;
-        }
-      } catch (error) {
-        console.error('Error during token exchange:', error);
-        return false;
-      }
-    };
-
-    const getTokenFromLocalStorage = () => {
-      console.log('Getting idToken from localStorage...');
-      const token = localStorage.getItem('idToken');
-      if (!token) {
-        console.error('No token found, redirecting to login');
-        redirectToLogin();
-        throw new Error('Token missing');
-      }
-      return token;
-    };
-
-    const redirectToLogin = () => {
-      console.log('Redirecting to Cognito login page');
-      const loginUrl = `${COGNITO_DOMAIN}/login?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=email+openid`;
-      window.location.href = loginUrl;
-    };
-
-    const getUserIdFromToken = () => {
-      console.log('Decoding user_id from idToken...');
-      const idToken = localStorage.getItem('idToken');
-      if (!idToken) {
-        throw new Error('No idToken found');
-      }
-
-      const tokenParts = idToken.split('.');
-      if (tokenParts.length !== 3) {
-        throw new Error('Invalid idToken format');
-      }
-
-      const payload = JSON.parse(atob(tokenParts[1]));
-      const userId = payload.sub;
-      console.log('Extracted user_id:', userId);
-      return userId;
-    };
-
     const handleImageChange = (event) => {
       const image = document.getElementById('uploadedImage');
       const file = event.target.files[0];
-
-      console.log('Image selected:', file ? file.name : 'No file selected');
       if (file) {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -198,7 +168,6 @@
           image.src = reader.result;
           image.style.display = 'block';
           uploadedBase64Image = base64Image;
-          console.log('Image successfully converted to Base64');
         };
         reader.readAsDataURL(file);
       } else {
@@ -208,43 +177,23 @@
 
     const handleSubmit = async (event) => {
       event.preventDefault(); // 기본 폼 제출 방지
-      console.log('Submit button clicked');
 
       const height = document.getElementById('height').value;
       const weight = document.getElementById('weight').value;
       const fileInput = document.querySelector('input[type="file"]');
       const file = fileInput.files[0];
 
-      console.log('Form data:', {height, weight, file: file ? file.name : null});
-
       if (!height || !weight || !file || !uploadedBase64Image) {
-        console.warn('Form validation failed - missing fields');
         alert('모든 필드를 입력하세요.');
         return;
       }
 
       try {
-        console.log('Fetching token from storage...');
-        const token = getTokenFromLocalStorage();
-
-        console.log('Extracting user_id from idToken...');
-        const user_id = getUserIdFromToken();
-
-        console.log('Sending data to API:', {
-          user_id: user_id,
-          height: parseFloat(height),
-          weight: parseFloat(weight),
-          file_data: uploadedBase64Image,
-        });
-
+        console.log('Sending data to API...');
         const response = await fetch(apiUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            user_id: user_id,
             height: parseFloat(height),
             weight: parseFloat(weight),
             file_data: uploadedBase64Image,
@@ -252,37 +201,15 @@
         });
 
         if (!response.ok) {
-          console.error('API 호출 실패:', response.status, response.statusText);
-          throw new Error(`API 호출 실패: ${response.statusText}`);
+          throw new Error('API 호출 실패');
         }
 
         const data = await response.json();
-        console.log('API response:', data);
         alert(`Data processed successfully: ${JSON.stringify(data)}`);
       } catch (error) {
-        console.error('API 호출 오류:', error);
-        alert(`Error: ${error.message}`);
+        alert(`오류: ${error.message}`);
       }
     };
-
-    const init = async () => {
-      console.log('Initializing page...');
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-
-      if (code) {
-        console.log('Authorization code detected, attempting token exchange');
-        const success = await exchangeCodeForToken(code);
-        if (success) {
-          console.log('Token exchange success, cleaning up URL...');
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      } else {
-        console.log('No code detected, user may need to login');
-      }
-    };
-
-    window.onload = init;
   </script>
 </body>
 </html>
