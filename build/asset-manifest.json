@@ -1,0 +1,33 @@
+{
+  "files": {
+    "main.css": "/static/css/main.56a55649.css",
+    "main.js": "/static/js/main.5ee7fa13.js",
+    "static/js/258.d50c2093.chunk.js": "/static/js/258.d50c2093.chunk.js",
+    "static/js/566.358da2e0.chunk.js": "/static/js/566.358da2e0.chunk.js",
+    "static/js/633.4f960928.chunk.js": "/static/js/633.4f960928.chunk.js",
+    "static/js/314.30a7247a.chunk.js": "/static/js/314.30a7247a.chunk.js",
+    "static/media/Walking Girl.mp4": "/static/media/Walking Girl.3e396b6d837d0a1e8fb6.mp4",
+    "static/media/3.webp": "/static/media/3.a09d4f9247ff1db2326a.webp",
+    "static/media/14.webp": "/static/media/14.58be3ee1bc3ef4d3eeb9.webp",
+    "static/media/11.webp": "/static/media/11.e7d68608b949b6146f05.webp",
+    "static/media/4.webp": "/static/media/4.de840bd0f4e97d691184.webp",
+    "static/media/10.webp": "/static/media/10.2215515c7e0fccc8fdd5.webp",
+    "static/media/5.webp": "/static/media/5.1f6e8ef7a3202a60657e.webp",
+    "static/media/13.webp": "/static/media/13.acfb7f66d26d6b76bb19.webp",
+    "static/media/2.webp": "/static/media/2.f2a373d1f1794b8ee4f3.webp",
+    "static/media/12.webp": "/static/media/12.ea933c7ca51aed0ef58b.webp",
+    "static/media/1.webp": "/static/media/1.70c4ae83a463ded43bc6.webp",
+    "static/media/6.webp": "/static/media/6.2fa2e1673dc91628cf05.webp",
+    "static/media/kaushan-script-all-400-normal.woff": "/static/media/kaushan-script-all-400-normal.ba623d1ca520a2a711d2.woff",
+    "static/media/sirin-stencil-all-400-normal.woff": "/static/media/sirin-stencil-all-400-normal.e1b8add18154b5d65682.woff",
+    "static/media/kaushan-script-latin-400-normal.woff2": "/static/media/kaushan-script-latin-400-normal.2855d49bba6b2cb7bec5.woff2",
+    "static/media/sirin-stencil-latin-400-normal.woff2": "/static/media/sirin-stencil-latin-400-normal.f668f96beabdc683277b.woff2",
+    "static/media/kaushan-script-latin-ext-400-normal.woff2": "/static/media/kaushan-script-latin-ext-400-normal.5a05e21384fe4b1b9db7.woff2",
+    "index.html": "/index.html",
+    "static/media/star_white_48dp.svg": "/static/media/star_white_48dp.808b259deb685769240560a11e239a7f.svg"
+  },
+  "entrypoints": [
+    "static/css/main.56a55649.css",
+    "static/js/main.5ee7fa13.js"
+  ]
+}
